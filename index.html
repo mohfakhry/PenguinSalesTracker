@@ -357,10 +357,12 @@
       setLoading(false);
       showStatus("❌ " + message, "error");
 
+      // Technical detail (raw fetch/JSON errors) goes to the browser
+      // console only, never rendered into the page. An on-screen debug
+      // panel is unnecessary exposure for a normal employee-facing app
+      // and it's still available via devtools for actual debugging.
       if (debugMessage) {
-        const debug = document.getElementById("debug");
-        debug.textContent = debugMessage;
-        debug.style.display = "block";
+        console.error(debugMessage);
       }
     }
 
