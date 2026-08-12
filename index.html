@@ -1,682 +1,667 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2481cc">
+  <title>نظام الحضور والانصراف</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width,
-                 initial-scale=1.0,
-                 maximum-scale=1.0,
-                 user-scalable=no">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <title>نظام الحضور والانصراف</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    * {
+      box-sizing: border-box;
+    }
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        20px
+        max(20px, env(safe-area-inset-bottom));
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            min-height: 100%;
-        }
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-        body {
-            font-family:
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
+      background: var(--tg-theme-bg-color, #fff);
+      color: var(--tg-theme-text-color, #111);
+    }
 
-            background:
-                var(--tg-theme-bg-color, #ffffff);
+    .container {
+      width: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
 
-            color:
-                var(--tg-theme-text-color, #000000);
+    h1 {
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
 
-            min-height: 100vh;
+    h2 {
+      margin: 0 0 12px;
+      font-size: 21px;
+    }
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+    p {
+      line-height: 1.7;
+    }
 
-            padding: 20px;
-        }
+    .card {
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--tg-theme-secondary-bg-color, #f3f3f3);
+    }
 
-        .container {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+    .status {
+      margin-top: 16px;
+      padding: 13px;
+      border-radius: 10px;
+      line-height: 1.7;
+    }
 
-        #welcome {
-            margin: 0 0 18px;
-            font-size: 24px;
-            font-weight: 700;
-        }
+    .info {
+      background: var(--tg-theme-secondary-bg-color, #f3f3f3);
+    }
 
-        .description {
-            margin: 0 0 24px;
+    .error {
+      background: rgba(217, 83, 79, 0.13);
+    }
 
-            font-size: 16px;
-            line-height: 1.8;
+    .success {
+      background: rgba(46, 125, 50, 0.13);
+    }
 
-            color:
-                var(--tg-theme-hint-color, #666666);
-        }
+    .username {
+      direction: ltr;
+      display: inline-block;
+      font-weight: 700;
+    }
 
-        .btn {
-            width: 100%;
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 14px 16px;
 
-            min-height: 50px;
+      border: 0;
+      border-radius: 12px;
 
-            margin: 8px 0;
-            padding: 13px 16px;
+      font-size: 16px;
+      font-weight: 700;
 
-            border: none;
-            border-radius: 10px;
+      color: var(--tg-theme-button-text-color, #fff);
+      background: var(--tg-theme-button-color, #2481cc);
 
-            font-size: 16px;
-            font-weight: 700;
+      cursor: pointer;
+    }
 
-            cursor: pointer;
+    button.secondary {
+      color: var(--tg-theme-text-color, #111);
+      background: var(--tg-theme-secondary-bg-color, #e9e9e9);
+      border: 1px solid var(--tg-theme-hint-color, #999);
+    }
 
-            background:
-                var(--tg-theme-button-color, #2481cc);
+    button.checkout {
+      background: #d9534f;
+    }
 
-            color:
-                var(--tg-theme-button-text-color, #ffffff);
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
 
-            transition: opacity 0.15s ease;
-        }
+    .hidden {
+      display: none !important;
+    }
 
-        .btn:active {
-            opacity: 0.75;
-        }
+    .spinner {
+      display: none;
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: default;
-        }
+      width: 25px;
+      height: 25px;
 
-        .btn-checkout {
-            background: #d9534f;
-        }
+      margin: 18px auto;
 
-        #spinner {
-            display: none;
+      border: 3px solid rgba(127, 127, 127, 0.25);
+      border-top-color: var(--tg-theme-button-color, #2481cc);
+      border-radius: 50%;
 
-            width: 28px;
-            height: 28px;
+      animation: spin 0.8s linear infinite;
+    }
 
-            margin: 18px auto 0;
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
-            border: 3px solid rgba(0, 0, 0, 0.12);
+    .small {
+      font-size: 13px;
+      opacity: 0.75;
+    }
 
-            border-radius: 50%;
-
-            border-top-color:
-                var(--tg-theme-button-color, #2481cc);
-
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        #status {
-            min-height: 25px;
-
-            margin-top: 18px;
-
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .success {
-            color: #188038;
-        }
-
-        .error {
-            color: #d93025;
-        }
-
-        .info {
-            color:
-                var(--tg-theme-hint-color, #666666);
-        }
-    </style>
+    .steps {
+      padding-right: 20px;
+      line-height: 2;
+    }
+  </style>
 </head>
 
 <body>
-
 <div class="container">
 
-    <h2 id="welcome">
-        أهلاً بك
-    </h2>
+  <h1 id="title">نظام الحضور والانصراف</h1>
 
-    <p class="description">
-        اختر نوع العملية لتسجيل حضورك أو انصرافك
-        بمشاركة موقعك الحالي:
+  <p id="welcome">جاري التحقق من حسابك...</p>
+
+  <!-- Registration -->
+  <section id="registrationCard" class="card hidden">
+    <h2>تسجيل حسابك</h2>
+
+    <p>
+      تم التعرف على حساب تيليجرام الخاص بك، ولكن لم يتم العثور عليه في نظام الموظفين.
     </p>
 
-    <button
-        id="checkinBtn"
-        class="btn"
-        type="button"
-        onclick="submitAttendance('حضور')">
+    <div id="newUserInfo" class="status info"></div>
 
-        تسجيل حضور
+    <button id="registerButton" onclick="registerEmployee()">
+      تسجيل حسابي
+    </button>
+  </section>
 
+  <!-- Username required -->
+  <section id="usernameCard" class="card hidden">
+    <h2>اسم المستخدم مطلوب</h2>
+
+    <p>
+      يجب أن يكون لديك اسم مستخدم في تيليجرام حتى يمكن إكمال التسجيل واستخدام النظام.
+    </p>
+
+    <div class="status info">
+      <strong>طريقة إنشاء اسم مستخدم:</strong>
+
+      <div class="steps">
+        1. افتح إعدادات تيليجرام.<br>
+        2. افتح تعديل الملف الشخصي.<br>
+        3. اختر اسم المستخدم Username.<br>
+        4. اختر اسماً فريداً.<br>
+        5. احفظ التغيير.
+      </div>
+    </div>
+
+    <p class="small">
+      لا تكتب اسم المستخدم هنا. بعد حفظه في تيليجرام اضغط الزر التالي، وسيقرأ النظام اسم المستخدم مباشرة من حسابك.
+    </p>
+
+    <button onclick="refreshStatus()">
+      تحقق مرة أخرى
+    </button>
+  </section>
+
+  <!-- Inactive employee -->
+  <section id="inactiveCard" class="card hidden">
+    <h2>الحساب غير مفعل</h2>
+
+    <p>
+      حسابك موجود في النظام، ولكنه غير مفعل حالياً.
+    </p>
+
+    <p>
+      إذا كنت قد عدت إلى المجموعة، يمكنك طلب إعادة تفعيل الحساب.
+    </p>
+
+    <button onclick="registerEmployee()">
+      طلب إعادة التفعيل
+    </button>
+  </section>
+
+  <!-- Attendance -->
+  <section id="attendanceCard" class="card hidden">
+    <h2 id="employeeName"></h2>
+
+    <div class="status info">
+      اسم المستخدم:
+      <span id="employeeUsername" class="username"></span>
+    </div>
+
+    <button onclick="submitAttendance('checkin')">
+      تسجيل حضور
     </button>
 
-    <button
-        id="checkoutBtn"
-        class="btn btn-checkout"
-        type="button"
-        onclick="submitAttendance('انصراف')">
-
-        تسجيل انصراف
-
+    <button class="checkout" onclick="submitAttendance('checkout')">
+      تسجيل انصراف
     </button>
+  </section>
 
-    <div id="spinner"></div>
+  <div id="spinner" class="spinner"></div>
 
-    <div id="status"></div>
+  <div id="status" class="status hidden"></div>
 
 </div>
 
-
 <script>
+  const tg = window.Telegram && window.Telegram.WebApp;
 
-    // ============================================================
-    // CONFIG
-    // ============================================================
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec";
 
-    const APPS_SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec";
+  const UI = {
+    ERROR: {
+      NOT_MEMBER:
+        "عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام نظام الحضور.",
 
+      GROUP_CHECK_FAILED:
+        "تعذر التحقق من عضويتك في المجموعة. حاول مرة أخرى.",
 
-    // ============================================================
-    // TELEGRAM
-    // ============================================================
+      NOT_REGISTERED:
+        "حسابك غير مسجل في نظام الموظفين. استخدم زر «تسجيل حسابي» أولاً.",
 
-    const tg =
-        window.Telegram &&
-        window.Telegram.WebApp
-            ? window.Telegram.WebApp
-            : null;
+      INACTIVE:
+        "حسابك موجود في النظام لكنه غير مفعل حالياً.",
 
+      NO_USERNAME:
+        "يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",
 
-    let submitting = false;
+      USERNAME_ALREADY_USED:
+        "اسم المستخدم هذا مرتبط بحساب موظف آخر.",
 
+      INVALID_LATITUDE:
+        "موقع GPS غير صحيح.",
 
-    // ============================================================
-    // UI HELPERS
-    // ============================================================
+      INVALID_LONGITUDE:
+        "إحداثيات GPS غير صحيحة.",
 
-    function setStatus(message, type) {
+      MISSING_INIT_DATA:
+        "لم يتم استلام بيانات تيليجرام.",
 
-        const status =
-            document.getElementById("status");
+      INVALID_ACTION:
+        "عملية غير صحيحة.",
 
-        status.innerText = message;
+      SERVER_ERROR:
+        "حدث خطأ في النظام. حاول مرة أخرى."
+    },
 
-        status.className = "";
+    SUCCESS: {
+      REGISTERED:
+        "تم تسجيل حسابك بنجاح.",
 
-        if (type) {
-            status.classList.add(type);
-        }
+      REACTIVATED:
+        "تمت إعادة تفعيل حسابك بنجاح.",
+
+      CHECKIN_RECORDED:
+        "تم تسجيل حضورك بنجاح.",
+
+      CHECKOUT_RECORDED:
+        "تم تسجيل انصرافك بنجاح."
+    }
+  };
+
+  let currentState = null;
+
+  function initTelegram() {
+    if (!tg) {
+      showError("يجب فتح النظام من داخل تيليجرام.");
+      return false;
     }
 
+    tg.ready();
+    tg.expand();
 
-    function setLoading(loading) {
+    return true;
+  }
 
-        submitting = loading;
-
-        document.getElementById("spinner")
-            .style.display =
-                loading ? "block" : "none";
-
-        document.getElementById("checkinBtn")
-            .disabled = loading;
-
-        document.getElementById("checkoutBtn")
-            .disabled = loading;
+  function getInitData() {
+    if (!tg || !tg.initData) {
+      throw new Error("Missing Telegram initData");
     }
 
+    return tg.initData;
+  }
 
-    // ============================================================
-    // TELEGRAM INITIALIZATION
-    // ============================================================
+  async function api(action, extra = {}) {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8"
+      },
+      body: JSON.stringify({
+        action,
+        initData: getInitData(),
+        ...extra
+      })
+    });
 
-    function initializeTelegram() {
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
 
-        if (!tg) {
+    return response.json();
+  }
 
-            setStatus(
-                "❌ يجب فتح النظام من داخل تيليجرام.",
-                "error"
-            );
+  function setLoading(isLoading) {
+    document.getElementById("spinner").style.display =
+      isLoading ? "block" : "none";
 
-            return false;
+    document.querySelectorAll("button").forEach(button => {
+      button.disabled = isLoading;
+    });
+  }
+
+  function hideCards() {
+    [
+      "registrationCard",
+      "usernameCard",
+      "inactiveCard",
+      "attendanceCard"
+    ].forEach(id => {
+      document.getElementById(id).classList.add("hidden");
+    });
+  }
+
+  function showStatus(message, type = "info") {
+    const element = document.getElementById("status");
+
+    element.textContent = message;
+    element.className = "status " + type;
+    element.classList.remove("hidden");
+  }
+
+  function clearStatus() {
+    document.getElementById("status").classList.add("hidden");
+  }
+
+  function showErrorByCode(code) {
+    showError(
+      UI.ERROR[code] ||
+      UI.ERROR.SERVER_ERROR
+    );
+  }
+
+  function showError(message) {
+    setLoading(false);
+    showStatus("❌ " + message, "error");
+  }
+
+  async function refreshStatus() {
+    if (!initTelegram()) return;
+
+    hideCards();
+    clearStatus();
+    setLoading(true);
+
+    try {
+      const result = await api("status");
+
+      setLoading(false);
+      renderStatus(result);
+
+    } catch (error) {
+      console.error(error);
+      showError(UI.ERROR.SERVER_ERROR);
+    }
+  }
+
+  function renderStatus(result) {
+    currentState = result;
+
+    if (!result.success) {
+      showErrorByCode(result.errorCode);
+      return;
+    }
+
+    const name = result.name || "الموظف";
+
+    document.getElementById("welcome").textContent =
+      "أهلاً، " + name;
+
+    switch (result.state) {
+
+      case "NEW_NO_USERNAME":
+      case "EXISTING_NO_USERNAME":
+        showUsernameRequired();
+        break;
+
+      case "NEW":
+        showRegistration(result);
+        break;
+
+      case "INACTIVE":
+        showInactive(result);
+        break;
+
+      case "ACTIVE":
+        showAttendance(result);
+        break;
+
+      default:
+        showError(UI.ERROR.SERVER_ERROR);
+    }
+  }
+
+  function showRegistration(result) {
+    const info = document.getElementById("newUserInfo");
+
+    info.innerHTML =
+      "تم التعرف على حسابك:<br>" +
+      "<strong>" + escapeHtml(result.name) + "</strong><br>" +
+      '<span class="username">@' +
+      escapeHtml(result.username) +
+      "</span>";
+
+    document.getElementById("registrationCard")
+      .classList.remove("hidden");
+
+    showStatus(
+      "هذا أول تسجيل لك. اضغط «تسجيل حسابي» لإكمال التسجيل.",
+      "info"
+    );
+  }
+
+  function showUsernameRequired() {
+    document.getElementById("usernameCard")
+      .classList.remove("hidden");
+
+    showStatus(
+      UI.ERROR.NO_USERNAME,
+      "info"
+    );
+  }
+
+  function showInactive(result) {
+    document.getElementById("inactiveCard")
+      .classList.remove("hidden");
+
+    showStatus(
+      UI.ERROR.INACTIVE,
+      "info"
+    );
+  }
+
+  function showAttendance(result) {
+    document.getElementById("employeeName").textContent =
+      result.name || "الموظف";
+
+    document.getElementById("employeeUsername").textContent =
+      "@" + result.username;
+
+    document.getElementById("attendanceCard")
+      .classList.remove("hidden");
+  }
+
+  async function registerEmployee() {
+    if (!initTelegram()) return;
+
+    clearStatus();
+    setLoading(true);
+
+    try {
+      const result = await api("register");
+
+      setLoading(false);
+
+      if (!result.success) {
+        if (result.errorCode === "NO_USERNAME") {
+          hideCards();
+          showUsernameRequired();
+          return;
         }
 
+        showErrorByCode(result.errorCode);
+        return;
+      }
 
+      if (result.state === "REGISTERED") {
+        showStatus(
+          UI.SUCCESS.REGISTERED,
+          "success"
+        );
+      } else if (result.state === "REACTIVATED") {
+        showStatus(
+          UI.SUCCESS.REACTIVATED,
+          "success"
+        );
+      } else {
+        showStatus(
+          "حسابك مسجل بالفعل.",
+          "info"
+        );
+      }
+
+      setTimeout(refreshStatus, 900);
+
+    } catch (error) {
+      console.error(error);
+      showError(UI.ERROR.SERVER_ERROR);
+    }
+  }
+
+  async function submitAttendance(action) {
+    if (!initTelegram()) return;
+
+    if (!navigator.geolocation) {
+      showError("المتصفح لا يدعم تحديد الموقع الجغرافي.");
+      return;
+    }
+
+    clearStatus();
+    setLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async position => {
         try {
+          const result = await api(action, {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
 
-            tg.ready();
+          setLoading(false);
 
-            tg.expand();
+          if (!result.success) {
+            handleAttendanceError(result);
+            return;
+          }
 
+          const message =
+            UI.SUCCESS[result.resultCode] ||
+            UI.SUCCESS.CHECKIN_RECORDED;
 
-            /*
-             * IMPORTANT:
-             *
-             * initData is the raw Telegram authorization data.
-             *
-             * This is what the server will validate.
-             */
+          showStatus(message, "success");
 
-            console.log(
-                "Telegram WebApp:",
-                tg
-            );
-
-            console.log(
-                "Telegram initData:",
-                tg.initData
-            );
-
-
-            /*
-             * Do NOT use initDataUnsafe as authentication.
-             *
-             * It is only used here for displaying the name.
-             */
-
-            const user =
-                tg.initDataUnsafe &&
-                tg.initDataUnsafe.user
-                    ? tg.initDataUnsafe.user
-                    : null;
-
-
-            if (user && user.first_name) {
-
-                document.getElementById("welcome")
-                    .innerText =
-                        `أهلاً، ${user.first_name}`;
-            }
-
-
-            /*
-             * The important check is initData.
-             */
-
-            if (!tg.initData) {
-
-                console.error(
-                    "Telegram initData is empty."
-                );
-
-                setStatus(
-                    "❌ لم يتم استلام بيانات التحقق من تيليجرام.",
-                    "error"
-                );
-
-                return false;
-            }
-
-
-            return true;
+          setTimeout(refreshStatus, 1500);
 
         } catch (error) {
-
-            console.error(
-                "Telegram initialization error:",
-                error
-            );
-
-            setStatus(
-                "❌ حدث خطأ أثناء تشغيل النظام.",
-                "error"
-            );
-
-            return false;
+          console.error(error);
+          showError(UI.ERROR.SERVER_ERROR);
         }
+      },
+
+      error => {
+        setLoading(false);
+
+        if (error.code === 1) {
+          showError(
+            "تم رفض الوصول إلى الموقع. اسمح للتطبيق باستخدام موقعك ثم حاول مرة أخرى."
+          );
+          return;
+        }
+
+        if (error.code === 2) {
+          showError("تعذر تحديد موقعك الحالي.");
+          return;
+        }
+
+        if (error.code === 3) {
+          showError("انتهت مهلة تحديد الموقع. حاول مرة أخرى.");
+          return;
+        }
+
+        showError(
+          "تعذر الحصول على موقعك الحالي."
+        );
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  function handleAttendanceError(result) {
+    if (result.errorCode === "NOT_MEMBER") {
+      hideCards();
+      showErrorByCode("NOT_MEMBER");
+      return;
     }
 
-
-    // ============================================================
-    // ATTENDANCE
-    // ============================================================
-
-    function submitAttendance(action) {
-
-        if (submitting) {
-            return;
-        }
-
-
-        if (!tg) {
-
-            setStatus(
-                "❌ يجب فتح النظام من داخل تيليجرام.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        /*
-         * THIS is the authentication value.
-         *
-         * Never send a user ID supplied independently by the
-         * browser as the trusted identity.
-         */
-
-        const initData = tg.initData;
-
-
-        if (!initData) {
-
-            setStatus(
-                "❌ بيانات تيليجرام غير متوفرة.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            action !== "حضور" &&
-            action !== "انصراف"
-        ) {
-
-            setStatus(
-                "❌ عملية غير صحيحة.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (!navigator.geolocation) {
-
-            setStatus(
-                "❌ هذا الجهاز لا يدعم تحديد الموقع.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        setLoading(true);
-
-        setStatus(
-            "جاري تحديد موقعك الحالي...",
-            "info"
-        );
-
-
-        navigator.geolocation.getCurrentPosition(
-
-            function(position) {
-
-                const latitude =
-                    position.coords.latitude;
-
-                const longitude =
-                    position.coords.longitude;
-
-                const accuracy =
-                    position.coords.accuracy;
-
-
-                console.log(
-                    "GPS:",
-                    {
-                        latitude,
-                        longitude,
-                        accuracy
-                    }
-                );
-
-
-                setStatus(
-                    "جاري حفظ وتأكيد العملية...",
-                    "info"
-                );
-
-
-                /*
-                 * Only send:
-                 *
-                 * 1. Telegram's signed initData
-                 * 2. attendance action
-                 * 3. GPS coordinates
-                 *
-                 * The server obtains the user's identity
-                 * from validated initData.
-                 */
-
-                const payload = {
-
-                    initData: initData,
-
-                    action: action,
-
-                    latitude: latitude,
-
-                    longitude: longitude,
-
-                    accuracy: accuracy
-                };
-
-
-                console.log(
-                    "Sending attendance request."
-                );
-
-
-                fetch(
-                    APPS_SCRIPT_URL,
-                    {
-                        method: "POST",
-
-                        /*
-                         * text/plain avoids the CORS preflight
-                         * that application/json can cause.
-                         */
-
-                        headers: {
-                            "Content-Type":
-                                "text/plain;charset=UTF-8"
-                        },
-
-                        body:
-                            JSON.stringify(payload)
-                    }
-                )
-
-                .then(function(response) {
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            "HTTP " +
-                            response.status
-                        );
-                    }
-
-                    return response.text();
-                })
-
-                .then(function(text) {
-
-                    console.log(
-                        "Server response:",
-                        text
-                    );
-
-
-                    let result;
-
-                    try {
-
-                        result =
-                            JSON.parse(text);
-
-                    } catch (error) {
-
-                        throw new Error(
-                            "Invalid server response."
-                        );
-                    }
-
-
-                    setLoading(false);
-
-
-                    if (result.success) {
-
-                        setStatus(
-                            result.message ||
-                            "✅ تم تسجيل العملية بنجاح.",
-                            "success"
-                        );
-
-
-                        setTimeout(
-                            function() {
-
-                                if (
-                                    tg &&
-                                    typeof tg.close === "function"
-                                ) {
-
-                                    tg.close();
-                                }
-
-                            },
-                            2000
-                        );
-
-                    } else {
-
-                        setStatus(
-                            "❌ " +
-                            (
-                                result.error ||
-                                "حدث خطأ غير معروف."
-                            ),
-                            "error"
-                        );
-                    }
-
-                })
-
-                .catch(function(error) {
-
-                    console.error(
-                        "Attendance request error:",
-                        error
-                    );
-
-
-                    setLoading(false);
-
-
-                    setStatus(
-                        "❌ حدث خطأ أثناء الاتصال بالخادم.",
-                        "error"
-                    );
-                });
-            },
-
-
-            function(error) {
-
-                setLoading(false);
-
-
-                console.error(
-                    "GPS error:",
-                    error
-                );
-
-
-                let message =
-                    "❌ تعذر الحصول على موقعك.";
-
-
-                if (
-                    error.code ===
-                    error.PERMISSION_DENIED
-                ) {
-
-                    message =
-                        "❌ تم رفض صلاحية الموقع. يرجى السماح لتيليجرام بالوصول إلى موقعك.";
-
-                } else if (
-                    error.code ===
-                    error.POSITION_UNAVAILABLE
-                ) {
-
-                    message =
-                        "❌ تعذر تحديد موقعك حالياً. تأكد من تشغيل GPS.";
-
-                } else if (
-                    error.code ===
-                    error.TIMEOUT
-                ) {
-
-                    message =
-                        "❌ انتهت مهلة تحديد الموقع. حاول مرة أخرى.";
-                }
-
-
-                setStatus(
-                    message,
-                    "error"
-                );
-            },
-
-
-            {
-                enableHighAccuracy: true,
-
-                timeout: 15000,
-
-                maximumAge: 0
-            }
-        );
+    if (result.errorCode === "NOT_REGISTERED") {
+      hideCards();
+      showErrorByCode("NOT_REGISTERED");
+      return;
     }
 
+    if (result.errorCode === "INACTIVE") {
+      hideCards();
+      document.getElementById("inactiveCard")
+        .classList.remove("hidden");
+      showErrorByCode("INACTIVE");
+      return;
+    }
 
-    // ============================================================
-    // START
-    // ============================================================
+    if (result.errorCode === "NO_USERNAME") {
+      hideCards();
+      showUsernameRequired();
+      return;
+    }
 
-    initializeTelegram();
+    showErrorByCode(result.errorCode);
+  }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  if (initTelegram()) {
+    refreshStatus();
+  }
 </script>
 
 </body>
