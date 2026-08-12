@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0,
+                   maximum-scale=1.0, user-scalable=no">
+
+    <title>نظام الحضور والانصراف</title>
+
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #welcome {
+            margin: 0 0 20px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .description {
+            margin: 0 0 20px;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .btn {
+            width: 100%;
+            min-height: 48px;
+
+            margin: 8px 0;
+            padding: 12px 16px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 16px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            background-color: var(
+                --tg-theme-button-color,
+                #2481cc
+            );
+
+            color: var(
+                --tg-theme-button-text-color,
+                #ffffff
+            );
+
+            transition: opacity 0.15s ease;
+        }
+
+        .btn:active {
+            opacity: 0.75;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .btn-checkout {
+            background-color: #d9534f;
+        }
+
+        #status {
+            margin-top: 20px;
+
+            font-size: 14px;
+            line-height: 1.7;
+
+            min-height: 24px;
+        }
+
+        #spinner {
+            display: none;
+
+            width: 26px;
+            height: 26px;
+
+            margin: 16px auto 0;
+
+            border: 3px solid rgba(0, 0, 0, 0.12);
+            border-radius: 50%;
+
+            border-top-color: var(
+                --tg-theme-button-color,
+                #2481cc
+            );
+
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: #d93025;
+        }
+
+        .success {
+            color: #188038;
+        }
+
+        .info {
+            color: var(--tg-theme-hint-color, #666666);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2 id="welcome">أهلاً بك</h2>
+
+    <p class="description">
+        اختر نوع العملية لتسجيل حضورك أو انصرافك بمشاركة موقعك الحالي:
+    </p>
+
+    <button
+        id="checkinBtn"
+        class="btn"
+        type="button"
+        onclick="submitAttendance('حضور')">
+        تسجيل حضور
+    </button>
+
+    <button
+        id="checkoutBtn"
+        class="btn btn-checkout"
+        type="button"
+        onclick="submitAttendance('انصراف')">
+        تسجيل انصراف
+    </button>
+
+    <div id="spinner"></div>
+
+    <div id="status"></div>
+
+</div>
+
+
+<script>
+
+    /*
+     * ============================================================
+     * TELEGRAM WEB APP INITIALIZATION
+     * ============================================================
+     */
+
+    const tg = window.Telegram && window.Telegram.WebApp
+        ? window.Telegram.WebApp
+        : null;
+
+    let telegramUser = null;
+    let submitting = false;
+
+
+    function setStatus(message, type) {
+
+        const status = document.getElementById("status");
+
+        status.innerText = message;
+
+        status.className = "";
+
+        if (type === "error") {
+            status.classList.add("error");
+        }
+
+        if (type === "success") {
+            status.classList.add("success");
+        }
+
+        if (type === "info") {
+            status.classList.add("info");
+        }
+    }
+
+
+    function setLoading(loading) {
+
+        const spinner = document.getElementById("spinner");
+
+        const checkinBtn = document.getElementById("checkinBtn");
+        const checkoutBtn = document.getElementById("checkoutBtn");
+
+        submitting = loading;
+
+        spinner.style.display = loading
+            ? "block"
+            : "none";
+
+        checkinBtn.disabled = loading;
+        checkoutBtn.disabled = loading;
+    }
+
+
+    /*
+     * Initialize Telegram only when the page is actually
+     * running inside Telegram.
+     */
+
+    function initializeTelegram() {
+
+        if (!tg) {
+
+            setStatus(
+                "❌ يجب فتح النظام من داخل تيليجرام.",
+                "error"
+            );
+
+            console.error(
+                "Telegram WebApp SDK is not available."
+            );
+
+            return false;
+        }
+
+
+        try {
+
+            tg.ready();
+
+            tg.expand();
+
+            /*
+             * Log this information for debugging.
+             * It will not be displayed to the employee.
+             */
+
+            console.log(
+                "Telegram WebApp:",
+                tg
+            );
+
+            console.log(
+                "Telegram initData:",
+                tg.initData
+            );
+
+            console.log(
+                "Telegram initDataUnsafe:",
+                tg.initDataUnsafe
+            );
+
+
+            telegramUser =
+                tg.initDataUnsafe &&
+                tg.initDataUnsafe.user
+                    ? tg.initDataUnsafe.user
+                    : null;
+
+
+            /*
+             * Telegram user was received correctly.
+             */
+
+            if (telegramUser) {
+
+                console.log(
+                    "Telegram user detected:",
+                    telegramUser
+                );
+
+
+                const firstName =
+                    telegramUser.first_name || "";
+
+
+                document.getElementById("welcome").innerText =
+                    firstName
+                        ? `أهلاً، ${firstName}`
+                        : "أهلاً بك";
+
+
+                return true;
+            }
+
+
+            /*
+             * No Telegram user.
+             */
+
+            console.error(
+                "Telegram user was NOT found.",
+                {
+                    initData: tg.initData,
+                    initDataUnsafe: tg.initDataUnsafe
+                }
+            );
+
+
+            setStatus(
+                "❌ لم يتم التعرف على حساب تيليجرام. افتح النظام من زر «النظام» داخل البوت.",
+                "error"
+            );
+
+
+            return false;
+
+        } catch (error) {
+
+            console.error(
+                "Telegram initialization error:",
+                error
+            );
+
+            setStatus(
+                "❌ حدث خطأ أثناء تشغيل نظام تيليجرام.",
+                "error"
+            );
+
+            return false;
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * ATTENDANCE
+     * ============================================================
+     */
+
+    function submitAttendance(action) {
+
+        if (submitting) {
+            return;
+        }
+
+
+        /*
+         * Make sure Telegram is available.
+         */
+
+        if (!tg) {
+
+            setStatus(
+                "❌ يجب فتح النظام من داخل تيليجرام.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+         * Re-read the user every time.
+         * This avoids relying only on the value captured
+         * during initial page loading.
+         */
+
+        const user =
+            tg.initDataUnsafe &&
+            tg.initDataUnsafe.user
+                ? tg.initDataUnsafe.user
+                : telegramUser;
+
+
+        if (!user) {
+
+            console.error(
+                "No Telegram user available.",
+                tg.initDataUnsafe
+            );
+
+            setStatus(
+                "❌ لم يتم التعرف على مستخدم تيليجرام.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+         * Check browser GPS support.
+         */
+
+        if (!navigator.geolocation) {
+
+            setStatus(
+                "❌ هذا الجهاز لا يدعم تحديد الموقع الجغرافي.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+         * Start loading.
+         */
+
+        setLoading(true);
+
+        setStatus(
+            "جاري تحديد موقعك الحالي...",
+            "info"
+        );
+
+
+        /*
+         * Request current location.
+         */
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+                const longitude =
+                    position.coords.longitude;
+
+                const accuracy =
+                    position.coords.accuracy;
+
+
+                console.log(
+                    "GPS position:",
+                    {
+                        latitude,
+                        longitude,
+                        accuracy
+                    }
+                );
+
+
+                setStatus(
+                    "جاري حفظ وتأكيد العملية...",
+                    "info"
+                );
+
+
+                /*
+                 * Data sent to Apps Script.
+                 */
+
+                const data = {
+
+                    chat_id: user.id,
+
+                    name:
+                        `${user.first_name || ""} ${user.last_name || ""}`
+                            .trim(),
+
+                    username:
+                        user.username || "",
+
+                    action: action,
+
+                    latitude: latitude,
+
+                    longitude: longitude,
+
+                    accuracy: accuracy
+                };
+
+
+                console.log(
+                    "Attendance data:",
+                    data
+                );
+
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * Do not change the URL.
+                 *
+                 * This is your deployed Apps Script Web App.
+                 */
+
+                fetch(
+                    "https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec",
+                    {
+                        method: "POST",
+
+                        /*
+                         * Keep this as text/plain.
+                         *
+                         * Apps Script doPost() reads
+                         * e.postData.contents as JSON.
+                         *
+                         * Using application/json can trigger
+                         * a browser CORS preflight.
+                         */
+
+                        headers: {
+                            "Content-Type":
+                                "text/plain;charset=UTF-8"
+                        },
+
+                        body: JSON.stringify(data)
+                    }
+                )
+
+                .then(function(response) {
+
+                    console.log(
+                        "Server response:",
+                        response
+                    );
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "HTTP " + response.status
+                        );
+                    }
+
+
+                    return response.text();
+                })
+
+                .then(function(text) {
+
+                    console.log(
+                        "Server response text:",
+                        text
+                    );
+
+
+                    let result;
+
+                    try {
+
+                        result = JSON.parse(text);
+
+                    } catch (error) {
+
+                        console.error(
+                            "Invalid JSON returned by server:",
+                            text
+                        );
+
+                        throw new Error(
+                            "الخادم أعاد استجابة غير صحيحة."
+                        );
+                    }
+
+
+                    setLoading(false);
+
+
+                    if (result.success) {
+
+                        setStatus(
+                            result.message ||
+                            "✅ تم تسجيل العملية بنجاح.",
+                            "success"
+                        );
+
+
+                        /*
+                         * Close Telegram Web App
+                         * after successful registration.
+                         */
+
+                        setTimeout(
+                            function() {
+
+                                if (
+                                    tg &&
+                                    typeof tg.close === "function"
+                                ) {
+                                    tg.close();
+                                }
+
+                            },
+                            2000
+                        );
+
+                    } else {
+
+                        setStatus(
+                            "❌ " +
+                            (
+                                result.error ||
+                                "حدث خطأ غير معروف."
+                            ),
+                            "error"
+                        );
+                    }
+
+                })
+
+                .catch(function(error) {
+
+                    console.error(
+                        "Attendance request failed:",
+                        error
+                    );
+
+
+                    setLoading(false);
+
+
+                    setStatus(
+                        "❌ حدث خطأ أثناء الاتصال بالخادم.",
+                        "error"
+                    );
+                });
+
+            },
+
+
+            /*
+             * ====================================================
+             * GPS ERROR
+             * ====================================================
+             */
+
+            function(error) {
+
+                setLoading(false);
+
+                console.error(
+                    "Geolocation error:",
+                    error
+                );
+
+
+                let message =
+                    "❌ تعذر الحصول على موقعك.";
+
+
+                switch (error.code) {
+
+                    case error.PERMISSION_DENIED:
+
+                        message =
+                            "❌ تم رفض صلاحية الموقع. يرجى السماح لتيليجرام بالوصول إلى موقعك.";
+
+                        break;
+
+
+                    case error.POSITION_UNAVAILABLE:
+
+                        message =
+                            "❌ تعذر تحديد موقعك حالياً. تأكد من تشغيل GPS.";
+
+                        break;
+
+
+                    case error.TIMEOUT:
+
+                        message =
+                            "❌ انتهت مهلة تحديد الموقع. حاول مرة أخرى.";
+
+                        break;
+                }
+
+
+                setStatus(
+                    message,
+                    "error"
+                );
+            },
+
+
+            /*
+             * GPS options
+             */
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * START
+     * ============================================================
+     */
+
+    initializeTelegram();
+
+</script>
+
+</body>
+</html>
