@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
   <meta name="theme-color" content="#2481cc">
   <title>نظام الحضور والانصراف</title>
 
@@ -32,15 +35,15 @@
         "Segoe UI",
         sans-serif;
 
-      background: var(--tg-theme-bg-color, #fff);
-      color: var(--tg-theme-text-color, #111);
+      background: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #111111);
     }
 
     .container {
       width: 100%;
-      max-width: 430px;
+      max-width: 440px;
       margin: 0 auto;
-      padding-top: 20px;
+      padding-top: 16px;
     }
 
     h1 {
@@ -61,55 +64,45 @@
       margin-top: 16px;
       padding: 20px;
       border-radius: 16px;
-      background: var(--tg-theme-secondary-bg-color, #f3f3f3);
+      background: var(--tg-theme-secondary-bg-color, #f2f2f2);
     }
 
     .status {
       margin-top: 16px;
       padding: 13px;
-      border-radius: 10px;
+      border-radius: 11px;
       line-height: 1.7;
     }
 
     .info {
-      background: var(--tg-theme-secondary-bg-color, #f3f3f3);
+      background: var(--tg-theme-secondary-bg-color, #f2f2f2);
     }
 
     .error {
-      background: rgba(217, 83, 79, 0.13);
+      background: rgba(217, 83, 79, 0.14);
     }
 
     .success {
-      background: rgba(46, 125, 50, 0.13);
-    }
-
-    .username {
-      direction: ltr;
-      display: inline-block;
-      font-weight: 700;
+      background: rgba(46, 125, 50, 0.14);
     }
 
     button {
       width: 100%;
       margin-top: 12px;
       padding: 14px 16px;
-
       border: 0;
       border-radius: 12px;
-
       font-size: 16px;
       font-weight: 700;
-
-      color: var(--tg-theme-button-text-color, #fff);
+      color: var(--tg-theme-button-text-color, #ffffff);
       background: var(--tg-theme-button-color, #2481cc);
-
       cursor: pointer;
     }
 
     button.secondary {
-      color: var(--tg-theme-text-color, #111);
-      background: var(--tg-theme-secondary-bg-color, #e9e9e9);
-      border: 1px solid var(--tg-theme-hint-color, #999);
+      color: var(--tg-theme-text-color, #111111);
+      background: var(--tg-theme-secondary-bg-color, #e8e8e8);
+      border: 1px solid var(--tg-theme-hint-color, #999999);
     }
 
     button.checkout {
@@ -127,16 +120,12 @@
 
     .spinner {
       display: none;
-
-      width: 25px;
-      height: 25px;
-
-      margin: 18px auto;
-
+      width: 27px;
+      height: 27px;
+      margin: 20px auto;
       border: 3px solid rgba(127, 127, 127, 0.25);
       border-top-color: var(--tg-theme-button-color, #2481cc);
       border-radius: 50%;
-
       animation: spin 0.8s linear infinite;
     }
 
@@ -151,118 +140,163 @@
       opacity: 0.75;
     }
 
+    .username {
+      direction: ltr;
+      display: inline-block;
+      font-weight: 700;
+    }
+
     .steps {
       padding-right: 20px;
       line-height: 2;
+    }
+
+    .action-note {
+      margin-top: 10px;
+      font-size: 13px;
+      opacity: 0.75;
     }
   </style>
 </head>
 
 <body>
-<div class="container">
+  <main class="container">
 
-  <h1 id="title">نظام الحضور والانصراف</h1>
+    <h1>نظام الحضور والانصراف</h1>
 
-  <p id="welcome">جاري التحقق من حسابك...</p>
+    <p id="welcome">جاري التحقق من حسابك...</p>
 
-  <!-- Registration -->
-  <section id="registrationCard" class="card hidden">
-    <h2>تسجيل حسابك</h2>
+    <!-- NEW EMPLOYEE -->
+    <section id="registrationCard" class="card hidden">
+      <h2>تسجيل حسابك</h2>
 
-    <p>
-      تم التعرف على حساب تيليجرام الخاص بك، ولكن لم يتم العثور عليه في نظام الموظفين.
-    </p>
+      <p>
+        تم التعرف على حساب تيليجرام الخاص بك، ولكن لم يتم العثور عليه
+        في نظام الموظفين.
+      </p>
 
-    <div id="newUserInfo" class="status info"></div>
+      <div id="newUserInfo" class="status info"></div>
 
-    <button id="registerButton" onclick="registerEmployee()">
-      تسجيل حسابي
-    </button>
-  </section>
+      <button id="registerButton" type="button" onclick="registerEmployee()">
+        تسجيل حسابي
+      </button>
 
-  <!-- Username required -->
-  <section id="usernameCard" class="card hidden">
-    <h2>اسم المستخدم مطلوب</h2>
-
-    <p>
-      يجب أن يكون لديك اسم مستخدم في تيليجرام حتى يمكن إكمال التسجيل واستخدام النظام.
-    </p>
-
-    <div class="status info">
-      <strong>طريقة إنشاء اسم مستخدم:</strong>
-
-      <div class="steps">
-        1. افتح إعدادات تيليجرام.<br>
-        2. افتح تعديل الملف الشخصي.<br>
-        3. اختر اسم المستخدم Username.<br>
-        4. اختر اسماً فريداً.<br>
-        5. احفظ التغيير.
+      <div class="action-note">
+        لن يتم تسجيل حسابك إلا بعد الضغط على هذا الزر.
       </div>
-    </div>
+    </section>
 
-    <p class="small">
-      لا تكتب اسم المستخدم هنا. بعد حفظه في تيليجرام اضغط الزر التالي، وسيقرأ النظام اسم المستخدم مباشرة من حسابك.
-    </p>
+    <!-- NO USERNAME -->
+    <section id="usernameCard" class="card hidden">
+      <h2>اسم المستخدم مطلوب</h2>
 
-    <button onclick="refreshStatus()">
-      تحقق مرة أخرى
-    </button>
-  </section>
+      <p>
+        يجب أن يكون لديك اسم مستخدم في تيليجرام حتى يمكن استخدام النظام.
+      </p>
 
-  <!-- Inactive employee -->
-  <section id="inactiveCard" class="card hidden">
-    <h2>الحساب غير مفعل</h2>
+      <div class="status info">
+        <strong>لإنشاء اسم مستخدم:</strong>
 
-    <p>
-      حسابك موجود في النظام، ولكنه غير مفعل حالياً.
-    </p>
+        <div class="steps">
+          1. افتح إعدادات تيليجرام.<br>
+          2. افتح ملفك الشخصي أو تعديل الملف الشخصي.<br>
+          3. اختر اسم المستخدم Username.<br>
+          4. اختر اسماً فريداً.<br>
+          5. احفظ التغيير.
+        </div>
+      </div>
 
-    <p>
-      إذا كنت قد عدت إلى المجموعة، يمكنك طلب إعادة تفعيل الحساب.
-    </p>
+      <p class="small">
+        لا تكتب اسم المستخدم داخل التطبيق. بعد إنشائه في تيليجرام اضغط
+        «تحقق مرة أخرى».
+      </p>
 
-    <button onclick="registerEmployee()">
-      طلب إعادة التفعيل
-    </button>
-  </section>
+      <button type="button" onclick="refreshStatus()">
+        تحقق مرة أخرى
+      </button>
+    </section>
 
-  <!-- Attendance -->
-  <section id="attendanceCard" class="card hidden">
-    <h2 id="employeeName"></h2>
+    <!-- INACTIVE -->
+    <section id="inactiveCard" class="card hidden">
+      <h2>الحساب غير مفعل</h2>
 
-    <div class="status info">
-      اسم المستخدم:
-      <span id="employeeUsername" class="username"></span>
-    </div>
+      <p>
+        حسابك موجود في النظام ولكنه غير مفعل حالياً.
+      </p>
 
-    <button onclick="submitAttendance('checkin')">
-      تسجيل حضور
-    </button>
+      <p>
+        إذا كنت عضواً في المجموعة، يمكنك استخدام زر إعادة التفعيل لتحديث
+        حالة حسابك.
+      </p>
 
-    <button class="checkout" onclick="submitAttendance('checkout')">
-      تسجيل انصراف
-    </button>
-  </section>
+      <button type="button" onclick="registerEmployee()">
+        إعادة تفعيل حسابي
+      </button>
+    </section>
 
-  <div id="spinner" class="spinner"></div>
+    <!-- ACTIVE EMPLOYEE -->
+    <section id="attendanceCard" class="card hidden">
+      <h2 id="employeeName"></h2>
 
-  <div id="status" class="status hidden"></div>
+      <div class="status info">
+        اسم المستخدم:
+        <span id="employeeUsername" class="username"></span>
+      </div>
 
-</div>
+      <button type="button" onclick="submitAttendance('checkin')">
+        تسجيل حضور
+      </button>
 
-<script>
-  const tg = window.Telegram && window.Telegram.WebApp;
+      <button
+        type="button"
+        class="checkout"
+        onclick="submitAttendance('checkout')"
+      >
+        تسجيل انصراف
+      </button>
+    </section>
 
-  const API_URL =
-    "https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec";
+    <div id="spinner" class="spinner"></div>
 
-  const UI = {
-    ERROR: {
-      NOT_MEMBER:
-        "عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام نظام الحضور.",
+    <div id="status" class="status hidden"></div>
+
+  </main>
+
+  <script>
+    /*
+     * ==========================================================
+     * TELEGRAM MINI APP
+     * ==========================================================
+     *
+     * This page is hosted on GitHub Pages.
+     *
+     * Authentication:
+     *   Telegram.WebApp.initData
+     *
+     * The browser NEVER sends chat_id, username, or name as identity.
+     * Apps Script validates Telegram's signed initData server-side.
+     */
+
+    const tg = window.Telegram && window.Telegram.WebApp;
+
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec";
+
+    const ERROR_MESSAGES = {
+      INVALID_REQUEST:
+        "الطلب غير صحيح.",
+
+      SERVER_ERROR:
+        "حدث خطأ في النظام. حاول مرة أخرى.",
+
+      SERVICE_LOCKED:
+        "الخدمة متوقفة مؤقتاً.",
 
       GROUP_CHECK_FAILED:
         "تعذر التحقق من عضويتك في المجموعة. حاول مرة أخرى.",
+
+      NOT_MEMBER:
+        "عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام نظام الحضور والانصراف.",
 
       NOT_REGISTERED:
         "حسابك غير مسجل في نظام الموظفين. استخدم زر «تسجيل حسابي» أولاً.",
@@ -282,17 +316,11 @@
       INVALID_LONGITUDE:
         "إحداثيات GPS غير صحيحة.",
 
-      MISSING_INIT_DATA:
-        "لم يتم استلام بيانات تيليجرام.",
-
       INVALID_ACTION:
-        "عملية غير صحيحة.",
+        "العملية المطلوبة غير صحيحة."
+    };
 
-      SERVER_ERROR:
-        "حدث خطأ في النظام. حاول مرة أخرى."
-    },
-
-    SUCCESS: {
+    const SUCCESS_MESSAGES = {
       REGISTERED:
         "تم تسجيل حسابك بنجاح.",
 
@@ -304,365 +332,384 @@
 
       CHECKOUT_RECORDED:
         "تم تسجيل انصرافك بنجاح."
-    }
-  };
+    };
 
-  let currentState = null;
+    let currentState = null;
 
-  function initTelegram() {
-    if (!tg) {
-      showError("يجب فتح النظام من داخل تيليجرام.");
-      return false;
-    }
+    function initTelegram() {
+      if (!tg) {
+        showError("يجب فتح النظام من داخل تيليجرام.");
+        return false;
+      }
 
-    tg.ready();
-    tg.expand();
+      tg.ready();
+      tg.expand();
 
-    return true;
-  }
-
-  function getInitData() {
-    if (!tg || !tg.initData) {
-      throw new Error("Missing Telegram initData");
+      return true;
     }
 
-    return tg.initData;
-  }
+    function getInitData() {
+      if (!tg || !tg.initData) {
+        throw new Error("Telegram initData is unavailable.");
+      }
 
-  async function api(action, extra = {}) {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=UTF-8"
-      },
-      body: JSON.stringify({
-        action,
+      return tg.initData;
+    }
+
+    async function callApi(action, extra = {}) {
+      const payload = {
+        action: action,
         initData: getInitData(),
         ...extra
-      })
-    });
+      };
 
-    if (!response.ok) {
-      throw new Error("HTTP " + response.status);
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=UTF-8"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+
+      const result = await response.json();
+
+      if (!result || typeof result !== "object") {
+        throw new Error("Invalid API response.");
+      }
+
+      return result;
     }
 
-    return response.json();
-  }
+    function setLoading(isLoading) {
+      document.getElementById("spinner").style.display =
+        isLoading ? "block" : "none";
 
-  function setLoading(isLoading) {
-    document.getElementById("spinner").style.display =
-      isLoading ? "block" : "none";
+      document.querySelectorAll("button").forEach(function(button) {
+        button.disabled = isLoading;
+      });
+    }
 
-    document.querySelectorAll("button").forEach(button => {
-      button.disabled = isLoading;
-    });
-  }
+    function hideCards() {
+      [
+        "registrationCard",
+        "usernameCard",
+        "inactiveCard",
+        "attendanceCard"
+      ].forEach(function(id) {
+        document.getElementById(id).classList.add("hidden");
+      });
+    }
 
-  function hideCards() {
-    [
-      "registrationCard",
-      "usernameCard",
-      "inactiveCard",
-      "attendanceCard"
-    ].forEach(id => {
-      document.getElementById(id).classList.add("hidden");
-    });
-  }
+    function showStatus(message, type) {
+      const element = document.getElementById("status");
 
-  function showStatus(message, type = "info") {
-    const element = document.getElementById("status");
+      element.textContent = message;
+      element.className = "status " + (type || "info");
+      element.classList.remove("hidden");
+    }
 
-    element.textContent = message;
-    element.className = "status " + type;
-    element.classList.remove("hidden");
-  }
+    function clearStatus() {
+      document.getElementById("status").classList.add("hidden");
+    }
 
-  function clearStatus() {
-    document.getElementById("status").classList.add("hidden");
-  }
-
-  function showErrorByCode(code) {
-    showError(
-      UI.ERROR[code] ||
-      UI.ERROR.SERVER_ERROR
-    );
-  }
-
-  function showError(message) {
-    setLoading(false);
-    showStatus("❌ " + message, "error");
-  }
-
-  async function refreshStatus() {
-    if (!initTelegram()) return;
-
-    hideCards();
-    clearStatus();
-    setLoading(true);
-
-    try {
-      const result = await api("status");
-
+    function showError(message) {
       setLoading(false);
-      renderStatus(result);
-
-    } catch (error) {
-      console.error(error);
-      showError(UI.ERROR.SERVER_ERROR);
-    }
-  }
-
-  function renderStatus(result) {
-    currentState = result;
-
-    if (!result.success) {
-      showErrorByCode(result.errorCode);
-      return;
+      showStatus("❌ " + message, "error");
     }
 
-    const name = result.name || "الموظف";
-
-    document.getElementById("welcome").textContent =
-      "أهلاً، " + name;
-
-    switch (result.state) {
-
-      case "NEW_NO_USERNAME":
-      case "EXISTING_NO_USERNAME":
-        showUsernameRequired();
-        break;
-
-      case "NEW":
-        showRegistration(result);
-        break;
-
-      case "INACTIVE":
-        showInactive(result);
-        break;
-
-      case "ACTIVE":
-        showAttendance(result);
-        break;
-
-      default:
-        showError(UI.ERROR.SERVER_ERROR);
+    function showErrorByCode(errorCode) {
+      showError(
+        ERROR_MESSAGES[errorCode] ||
+        ERROR_MESSAGES.SERVER_ERROR
+      );
     }
-  }
 
-  function showRegistration(result) {
-    const info = document.getElementById("newUserInfo");
+    async function refreshStatus() {
+      if (!initTelegram()) return;
 
-    info.innerHTML =
-      "تم التعرف على حسابك:<br>" +
-      "<strong>" + escapeHtml(result.name) + "</strong><br>" +
-      '<span class="username">@' +
-      escapeHtml(result.username) +
-      "</span>";
+      hideCards();
+      clearStatus();
+      setLoading(true);
 
-    document.getElementById("registrationCard")
-      .classList.remove("hidden");
+      try {
+        const result = await callApi("status");
 
-    showStatus(
-      "هذا أول تسجيل لك. اضغط «تسجيل حسابي» لإكمال التسجيل.",
-      "info"
-    );
-  }
+        setLoading(false);
+        renderStatus(result);
 
-  function showUsernameRequired() {
-    document.getElementById("usernameCard")
-      .classList.remove("hidden");
+      } catch (error) {
+        console.error(error);
+        showError(ERROR_MESSAGES.SERVER_ERROR);
+      }
+    }
 
-    showStatus(
-      UI.ERROR.NO_USERNAME,
-      "info"
-    );
-  }
-
-  function showInactive(result) {
-    document.getElementById("inactiveCard")
-      .classList.remove("hidden");
-
-    showStatus(
-      UI.ERROR.INACTIVE,
-      "info"
-    );
-  }
-
-  function showAttendance(result) {
-    document.getElementById("employeeName").textContent =
-      result.name || "الموظف";
-
-    document.getElementById("employeeUsername").textContent =
-      "@" + result.username;
-
-    document.getElementById("attendanceCard")
-      .classList.remove("hidden");
-  }
-
-  async function registerEmployee() {
-    if (!initTelegram()) return;
-
-    clearStatus();
-    setLoading(true);
-
-    try {
-      const result = await api("register");
-
-      setLoading(false);
+    function renderStatus(result) {
+      currentState = result;
 
       if (!result.success) {
-        if (result.errorCode === "NO_USERNAME") {
-          hideCards();
-          showUsernameRequired();
-          return;
-        }
-
         showErrorByCode(result.errorCode);
         return;
       }
 
-      if (result.state === "REGISTERED") {
-        showStatus(
-          UI.SUCCESS.REGISTERED,
-          "success"
-        );
-      } else if (result.state === "REACTIVATED") {
-        showStatus(
-          UI.SUCCESS.REACTIVATED,
-          "success"
-        );
-      } else {
-        showStatus(
-          "حسابك مسجل بالفعل.",
-          "info"
-        );
+      const name = result.name || "الموظف";
+
+      document.getElementById("welcome").textContent =
+        "أهلاً، " + name;
+
+      switch (result.state) {
+        case "NEW":
+          showRegistration(result);
+          break;
+
+        case "NEW_NO_USERNAME":
+        case "EXISTING_NO_USERNAME":
+          showUsernameRequired();
+          break;
+
+        case "INACTIVE":
+          showInactive(result);
+          break;
+
+        case "ACTIVE":
+          showAttendance(result);
+          break;
+
+        default:
+          showError(ERROR_MESSAGES.SERVER_ERROR);
       }
-
-      setTimeout(refreshStatus, 900);
-
-    } catch (error) {
-      console.error(error);
-      showError(UI.ERROR.SERVER_ERROR);
-    }
-  }
-
-  async function submitAttendance(action) {
-    if (!initTelegram()) return;
-
-    if (!navigator.geolocation) {
-      showError("المتصفح لا يدعم تحديد الموقع الجغرافي.");
-      return;
     }
 
-    clearStatus();
-    setLoading(true);
+    function showRegistration(result) {
+      const info = document.getElementById("newUserInfo");
 
-    navigator.geolocation.getCurrentPosition(
-      async position => {
-        try {
-          const result = await api(action, {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
+      info.innerHTML =
+        "الاسم: <strong>" +
+        escapeHtml(result.name || "") +
+        "</strong><br>" +
+        "اسم المستخدم: <span class=\"username\">@" +
+        escapeHtml(result.username || "") +
+        "</span>";
 
-          setLoading(false);
+      document.getElementById("registrationCard")
+        .classList.remove("hidden");
 
-          if (!result.success) {
-            handleAttendanceError(result);
+      showStatus(
+        "هذا أول تسجيل لك. اضغط «تسجيل حسابي» لإكمال التسجيل.",
+        "info"
+      );
+    }
+
+    function showUsernameRequired() {
+      document.getElementById("usernameCard")
+        .classList.remove("hidden");
+
+      showStatus(
+        ERROR_MESSAGES.NO_USERNAME,
+        "info"
+      );
+    }
+
+    function showInactive() {
+      document.getElementById("inactiveCard")
+        .classList.remove("hidden");
+
+      showStatus(
+        ERROR_MESSAGES.INACTIVE,
+        "info"
+      );
+    }
+
+    function showAttendance(result) {
+      document.getElementById("employeeName").textContent =
+        result.name || "الموظف";
+
+      document.getElementById("employeeUsername").textContent =
+        "@" + (result.username || "");
+
+      document.getElementById("attendanceCard")
+        .classList.remove("hidden");
+    }
+
+    async function registerEmployee() {
+      if (!initTelegram()) return;
+
+      clearStatus();
+      setLoading(true);
+
+      try {
+        const result = await callApi("register");
+
+        setLoading(false);
+
+        if (!result.success) {
+          if (result.errorCode === "NO_USERNAME") {
+            hideCards();
+            showUsernameRequired();
             return;
           }
 
-          const message =
-            UI.SUCCESS[result.resultCode] ||
-            UI.SUCCESS.CHECKIN_RECORDED;
-
-          showStatus(message, "success");
-
-          setTimeout(refreshStatus, 1500);
-
-        } catch (error) {
-          console.error(error);
-          showError(UI.ERROR.SERVER_ERROR);
+          showErrorByCode(result.errorCode);
+          return;
         }
-      },
 
-      error => {
-        setLoading(false);
-
-        if (error.code === 1) {
-          showError(
-            "تم رفض الوصول إلى الموقع. اسمح للتطبيق باستخدام موقعك ثم حاول مرة أخرى."
+        if (result.state === "REGISTERED") {
+          showStatus(
+            SUCCESS_MESSAGES.REGISTERED,
+            "success"
           );
-          return;
+        } else if (result.state === "REACTIVATED") {
+          showStatus(
+            SUCCESS_MESSAGES.REACTIVATED,
+            "success"
+          );
+        } else {
+          showStatus(
+            "حسابك مسجل بالفعل.",
+            "info"
+          );
         }
 
-        if (error.code === 2) {
-          showError("تعذر تحديد موقعك الحالي.");
-          return;
-        }
+        setTimeout(refreshStatus, 900);
 
-        if (error.code === 3) {
-          showError("انتهت مهلة تحديد الموقع. حاول مرة أخرى.");
-          return;
-        }
-
-        showError(
-          "تعذر الحصول على موقعك الحالي."
-        );
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
+      } catch (error) {
+        console.error(error);
+        showError(ERROR_MESSAGES.SERVER_ERROR);
       }
-    );
-  }
-
-  function handleAttendanceError(result) {
-    if (result.errorCode === "NOT_MEMBER") {
-      hideCards();
-      showErrorByCode("NOT_MEMBER");
-      return;
     }
 
-    if (result.errorCode === "NOT_REGISTERED") {
-      hideCards();
-      showErrorByCode("NOT_REGISTERED");
-      return;
+    async function submitAttendance(action) {
+      if (!initTelegram()) return;
+
+      if (
+        action !== "checkin" &&
+        action !== "checkout"
+      ) {
+        showError(ERROR_MESSAGES.INVALID_ACTION);
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        showError("المتصفح لا يدعم تحديد الموقع الجغرافي.");
+        return;
+      }
+
+      clearStatus();
+      setLoading(true);
+
+      navigator.geolocation.getCurrentPosition(
+        async function(position) {
+          try {
+            const result = await callApi(action, {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            });
+
+            setLoading(false);
+
+            if (!result.success) {
+              handleAttendanceError(result);
+              return;
+            }
+
+            showStatus(
+              SUCCESS_MESSAGES[result.resultCode] ||
+              SUCCESS_MESSAGES.CHECKIN_RECORDED,
+              "success"
+            );
+
+            setTimeout(refreshStatus, 1500);
+
+          } catch (error) {
+            console.error(error);
+            showError(ERROR_MESSAGES.SERVER_ERROR);
+          }
+        },
+
+        function(error) {
+          setLoading(false);
+
+          if (error.code === 1) {
+            showError(
+              "تم رفض الوصول إلى الموقع. اسمح للتطبيق باستخدام موقعك ثم حاول مرة أخرى."
+            );
+            return;
+          }
+
+          if (error.code === 2) {
+            showError("تعذر تحديد موقعك الحالي.");
+            return;
+          }
+
+          if (error.code === 3) {
+            showError("انتهت مهلة تحديد الموقع. حاول مرة أخرى.");
+            return;
+          }
+
+          showError("تعذر الحصول على موقعك الحالي.");
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
     }
 
-    if (result.errorCode === "INACTIVE") {
-      hideCards();
-      document.getElementById("inactiveCard")
-        .classList.remove("hidden");
-      showErrorByCode("INACTIVE");
-      return;
+    function handleAttendanceError(result) {
+      if (result.errorCode === "NOT_MEMBER") {
+        hideCards();
+        showErrorByCode("NOT_MEMBER");
+        return;
+      }
+
+      if (result.errorCode === "NOT_REGISTERED") {
+        hideCards();
+
+        document.getElementById("registrationCard")
+          .classList.remove("hidden");
+
+        showErrorByCode("NOT_REGISTERED");
+        return;
+      }
+
+      if (result.errorCode === "INACTIVE") {
+        hideCards();
+
+        document.getElementById("inactiveCard")
+          .classList.remove("hidden");
+
+        showErrorByCode("INACTIVE");
+        return;
+      }
+
+      if (result.errorCode === "NO_USERNAME") {
+        hideCards();
+        showUsernameRequired();
+        return;
+      }
+
+      showErrorByCode(result.errorCode);
     }
 
-    if (result.errorCode === "NO_USERNAME") {
-      hideCards();
-      showUsernameRequired();
-      return;
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    showErrorByCode(result.errorCode);
-  }
-
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  if (initTelegram()) {
-    refreshStatus();
-  }
-</script>
-
+    // Start the Mini App.
+    if (initTelegram()) {
+      refreshStatus();
+    }
+  </script>
 </body>
 </html>
