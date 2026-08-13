@@ -221,8 +221,7 @@
     const tg = window.Telegram && window.Telegram.WebApp;
 
     // CURRENT Apps Script Web App deployment supplied by the user.
-    const API_URL =
-      "https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT5mlsxCj7bZ7Ko50AMKJ-OcDW9Y7Ya5i19j-aQGeBJ_/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT5mlsxCj7bZ7Ko50AMKJ-OcDW9Y7Ya5i19j-aQGeBJ_/exec";
 
     const ERROR_MESSAGES = {
       GROUP_NOT_MEMBER:
@@ -288,38 +287,52 @@
     }
 
     async function callApi(action, extra = {}) {
+      const initData = getInitData();
+
+      if (!initData) {
+        throw new Error("Telegram Mini App data is unavailable.");
+      }
+
       const payload = {
         action: action,
-        initData: getInitData(),
+        initData: initData,
         ...extra
       };
 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=UTF-8"
-        },
-        body: JSON.stringify(payload)
-      });
+      let response;
+
+      try {
+        response = await fetch(API_URL + "?_=" + Date.now(), {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=UTF-8"
+          },
+          body: JSON.stringify(payload),
+          cache: "no-store",
+          redirect: "follow"
+        });
+      } catch (networkError) {
+        console.error("Mini App API network error:", networkError);
+        throw new Error("تعذر الاتصال بالخادم.");
+      }
 
       const raw = await response.text();
 
+      if (!response.ok) {
+        console.error("Mini App API HTTP error:", response.status, raw.slice(0, 500));
+        throw new Error("الخادم أعاد خطأ HTTP " + response.status);
+      }
+
       let result;
+
       try {
         result = JSON.parse(raw);
-      } catch (e) {
-        throw new Error("Invalid JSON response: " + raw.slice(0, 500));
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          "HTTP " + response.status + ": " +
-          (result.error || raw.slice(0, 500))
+      } catch (parseError) {
+        console.error(
+          "Mini App API returned non-JSON response:",
+          raw.slice(0, 500)
         );
-      }
-
-      if (!result || typeof result !== "object") {
-        throw new Error("Invalid API response.");
+        throw new Error("استجابة الخادم غير صالحة.");
       }
 
       return result;
