@@ -8,13 +8,63 @@
 <style>
 :root{--bg:var(--tg-theme-bg-color,#f5f5f5);--surface:var(--tg-theme-secondary-bg-color,#fff);--text:var(--tg-theme-text-color,#111);--muted:var(--tg-theme-hint-color,#707070);--button:var(--tg-theme-button-color,#2481cc);--buttonText:var(--tg-theme-button-text-color,#fff);--danger:#d9534f;--success:#239b56;--warning:#b7791f;--border:rgba(127,127,127,.16)}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{min-height:100dvh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.app{width:min(100%,480px);min-height:100dvh;margin:auto;padding:max(14px,env(safe-area-inset-top)) clamp(14px,5vw,22px) max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column}.header{padding:8px 2px 18px}h1{margin:0;font-size:clamp(21px,5.5vw,26px);font-weight:850}#welcome{margin:5px 0;color:var(--muted);font-size:14px}.main{flex:1;display:flex;flex-direction:column;justify-content:center}.screen{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:clamp(24px,7vw,34px);text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.06)}.icon{width:clamp(72px,20vw,88px);height:clamp(72px,20vw,88px);margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:clamp(32px,9vw,40px);background:color-mix(in srgb,var(--button) 11%,transparent)}.success{background:color-mix(in srgb,var(--success) 13%,transparent)!important}.warningIcon{background:color-mix(in srgb,var(--warning) 14%,transparent)!important}.loading{animation:pulse 1.1s ease-in-out infinite}@keyframes pulse{50%{transform:scale(.94);opacity:.72}}h2{margin:0;font-size:clamp(23px,7vw,31px);font-weight:850}.message{min-height:24px;margin:8px 0 20px;color:var(--muted);line-height:1.7;font-size:14px}.details{margin:0 0 8px;padding:14px;border-radius:15px;background:color-mix(in srgb,var(--muted) 7%,transparent);text-align:right;line-height:1.9;font-size:14px}button{width:100%;min-height:58px;margin-top:12px;padding:14px 18px;border:0;border-radius:17px;font:inherit;font-size:clamp(16px,4.5vw,18px);font-weight:800;color:var(--buttonText);background:var(--button);cursor:pointer;touch-action:manipulation}button:disabled{opacity:.5}button.secondary,.back{color:var(--text);background:transparent;border:0;font-size:14px;min-height:42px}.warning{margin-top:16px;padding:15px;border-radius:15px;background:color-mix(in srgb,var(--warning) 12%,transparent);text-align:right;line-height:1.75;font-size:14px}.warningTitle{font-weight:850}.supervisors{margin-top:12px}.supervisor-link{display:block;padding:10px 0;color:var(--button);font-weight:750;text-decoration:none;border-top:1px solid var(--border)}.supervisor-link:first-child{border-top:0}.progress{display:none;height:3px;margin:15px 8px 0;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--muted) 14%,transparent)}.progress.show{display:block}.progress:after{content:"";display:block;width:35%;height:100%;background:var(--button);animation:progress 1.05s ease-in-out infinite}@keyframes progress{from{transform:translateX(300%)}to{transform:translateX(-300%)}}.feedback{display:none;margin-top:14px;padding:13px;border-radius:15px;background:color-mix(in srgb,var(--danger) 12%,transparent);font-size:13px}.feedback.show{display:block}.steps{margin-top:16px;padding:14px 18px;border-radius:15px;background:color-mix(in srgb,var(--muted) 7%,transparent);color:var(--muted);text-align:right;line-height:2;font-size:13px}.footer{padding-top:16px;text-align:center;color:var(--muted);font-size:11px}.hidden{display:none!important}
+.app{width:min(100%,480px);min-height:100dvh;margin:auto;padding:max(14px,env(safe-area-inset-top)) clamp(14px,5vw,22px) max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column}.header{padding:8px 2px 18px}h1{margin:0;font-size:clamp(21px,5.5vw,26px);font-weight:850}#welcome{margin:5px 0;color:var(--muted);font-size:14px}.main{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding-top:4px}.screen{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:clamp(24px,7vw,34px);text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.06)}.icon{width:clamp(72px,20vw,88px);height:clamp(72px,20vw,88px);margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:clamp(32px,9vw,40px);background:color-mix(in srgb,var(--button) 11%,transparent)}.success{background:color-mix(in srgb,var(--success) 13%,transparent)!important}.warningIcon{background:color-mix(in srgb,var(--warning) 14%,transparent)!important}.loading{animation:pulse 1.1s ease-in-out infinite}@keyframes pulse{50%{transform:scale(.94);opacity:.72}}h2{margin:0;font-size:clamp(23px,7vw,31px);font-weight:850}.message{min-height:24px;margin:8px 0 20px;color:var(--muted);line-height:1.7;font-size:14px}.details{margin:0 0 8px;padding:14px;border-radius:15px;background:color-mix(in srgb,var(--muted) 7%,transparent);text-align:right;line-height:1.9;font-size:14px}button{width:100%;min-height:58px;margin-top:12px;padding:14px 18px;border:0;border-radius:17px;font:inherit;font-size:clamp(16px,4.5vw,18px);font-weight:800;color:var(--buttonText);background:var(--button);cursor:pointer;touch-action:manipulation}button:disabled{opacity:.5}button.secondary,.back{color:var(--text);background:transparent;border:0;font-size:14px;min-height:42px}.warning{margin-top:16px;padding:15px;border-radius:15px;background:color-mix(in srgb,var(--warning) 12%,transparent);text-align:right;line-height:1.75;font-size:14px}.warningTitle{font-weight:850}.supervisors{margin-top:12px}.supervisor-link{display:block;padding:10px 0;color:var(--button);font-weight:750;text-decoration:none;border-top:1px solid var(--border)}.supervisor-link:first-child{border-top:0}.progress{display:none;height:3px;margin:15px 8px 0;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--muted) 14%,transparent)}.progress.show{display:block}.progress:after{content:"";display:block;width:35%;height:100%;background:var(--button);animation:progress 1.05s ease-in-out infinite}@keyframes progress{from{transform:translateX(300%)}to{transform:translateX(-300%)}}.feedback{display:none;margin-top:14px;padding:13px;border-radius:15px;background:color-mix(in srgb,var(--danger) 12%,transparent);font-size:13px}.feedback.show{display:block}.steps{margin-top:16px;padding:14px 18px;border-radius:15px;background:color-mix(in srgb,var(--muted) 7%,transparent);color:var(--muted);text-align:right;line-height:2;font-size:13px}.footer{padding-top:16px;text-align:center;color:var(--muted);font-size:11px}
+.business-name{
+  font-size:clamp(20px,5.2vw,25px);
+  font-weight:850;
+  line-height:1.25;
+  letter-spacing:-.3px;
+}
+.user-name{
+  margin-top:6px;
+  color:var(--text);
+  font-size:clamp(20px,6vw,27px);
+  font-weight:850;
+  line-height:1.25;
+}
+.action-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:8px;
+}
+.action{
+  min-height:64px;
+  margin-top:0;
+}
+.action.checkin{
+  background:var(--button);
+}
+.action.checkout{
+  background:var(--danger);
+}
+@media(max-width:360px){
+  .action-buttons{grid-template-columns:1fr;gap:9px}
+  .action{min-height:56px}
+}
+.hidden{display:none!important}
 </style>
 </head>
 <body><main class="app">
-<header class="header"><h1>زيارات المبيعات</h1><p id="welcome">جاري التحقق...</p></header>
+<header class="header">
+  <!-- Change this text whenever you want to change the business name shown to employees. -->
+  <div id="businessName" class="business-name">زيارات المبيعات</div>
+  <div id="welcome" class="user-name">جاري التحقق...</div>
+</header>
 <section class="main">
-<section id="home" class="screen"><div id="homeIcon" class="icon">⏳</div><h2 id="homeTitle">جاري التحقق</h2><p id="homeMsg" class="message">لحظة واحدة...</p><button id="primary" class="hidden"></button><div id="feedback" class="feedback"></div><div id="homeProgress" class="progress"></div></section>
+<section id="home" class="screen">
+  <div id="homeIcon" class="icon">⏳</div>
+  <h2 id="homeTitle">جاري التحقق</h2>
+  <p id="homeMsg" class="message">لحظة واحدة...</p>
+
+  <div id="actionButtons" class="action-buttons hidden">
+    <button id="checkinBtn" type="button" class="action checkin">بدء الزيارة</button>
+    <button id="checkoutBtn" type="button" class="action checkout">إنهاء الزيارة</button>
+  </div>
+
+  <div id="feedback" class="feedback"></div>
+  <div id="homeProgress" class="progress"></div>
+</section>
 <section id="confirm" class="screen hidden"><div id="confirmIcon" class="icon">📍</div><h2 id="confirmTitle"></h2><p id="confirmMsg" class="message"></p><div class="details"><strong>سيتم تسجيل:</strong><br>📍 موقعك الحالي<br>🕐 الوقت الحالي</div><button id="confirmBtn"></button><button id="backBtn" class="back">رجوع</button><div id="confirmProgress" class="progress"></div></section>
 <section id="result" class="screen hidden"><div class="icon success">✓</div><h2 id="resultTitle"></h2><p id="resultMsg" class="message"></p><div id="warning" class="warning hidden"><div class="warningTitle">⚠️ تنبيه</div><div id="warningMsg"></div><div id="supervisors" class="supervisors hidden"><div style="margin:10px 0 4px;font-weight:800">إبلاغ المشرف</div><div id="supervisorLinks"></div></div></div><button id="continueBtn">متابعة</button></section>
 <section id="registration" class="screen hidden"><div class="icon">👤</div><h2>تسجيل حسابك</h2><p class="message">تم التعرف على حساب تيليجرام الخاص بك، ولكن لم يتم العثور عليه في نظام الموظفين.</p><button id="registerBtn">تسجيل حسابي</button></section>
@@ -23,22 +73,62 @@
 </section><footer id="footer" class="footer">جاهز</footer></main>
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
-const API_URL="https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT5mlsxCj7bZ7Ko50AMKJ-OcDW9Y7Ya5i19j-aQGeBJ_/exec";
+// =========================
+   // EDITABLE BUSINESS NAME
+   // =========================
+   const BUSINESS_NAME = "زيارات المبيعات";
+   document.getElementById("businessName").textContent = BUSINESS_NAME;
+
+   const API_URL="https://script.google.com/macros/s/AKfycbw2GV7CNsdoeaoCMQnKs1Oe72Kkb_B0lwxRlUZi4wfXfwzukrHifa-dL3kDj8L7fPJtow/exec";
 // Optional fallback. Prefer result.supervisors from the backend: [{name:"Ahmed",username:"ahmed"}].
 const DEFAULT_SUPERVISORS=[];
-const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
+const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
 const S={busy:false,action:null,name:"الموظف"};
 function initTelegram(){if(!tg){renderError("يجب فتح النظام من داخل تيليجرام.");return false}try{tg.ready();tg.expand()}catch(e){}return true}
 function initData(){if(!tg||!tg.initData)throw Error("Telegram initData is unavailable.");return tg.initData}
-async function api(action,extra={}){const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,initData:initData(),...extra}),cache:"no-store",redirect:"follow"});const raw=await r.text();let x;try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");return x}
+async function api(action,extra={}){let r;try{r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,initData:initData(),...extra}),cache:"no-store",redirect:"follow"})}catch(e){throw Error("BACKEND_CONNECTION_FAILED")}const raw=await r.text();let x;try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");return x}
 const ids=["home","confirm","result","registration","username","inactive"];
 function screen(id){ids.forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id))}
 function busy(v){S.busy=v;document.querySelectorAll("button").forEach(b=>b.disabled=v);document.getElementById("homeProgress").classList.toggle("show",v);document.getElementById("confirmProgress").classList.toggle("show",v)}
-function home(icon,title,msg){screen("home");document.getElementById("homeIcon").textContent=icon;document.getElementById("homeTitle").textContent=title;document.getElementById("homeMsg").textContent=msg}
+function home(icon,title,msg){
+  screen("home");
+  document.getElementById("homeIcon").textContent=icon;
+  document.getElementById("homeTitle").textContent=title;
+  document.getElementById("homeMsg").textContent=msg;
+}
 function feedback(msg){const e=document.getElementById("feedback");e.textContent=msg;e.className="feedback show"}
 function clearFeedback(){document.getElementById("feedback").className="feedback"}
-function renderHome(){clearFeedback();home("🟢","جاهز لزيارة جديدة","ابدأ تسجيل زيارتك الحالية.");const b=document.getElementById("primary");b.textContent="بدء الزيارة";b.onclick=()=>confirmAction("checkin");b.classList.remove("hidden");document.getElementById("footer").textContent="جاهز"}
-function renderError(msg){home("⚠️","تعذر المتابعة",msg);const b=document.getElementById("primary");b.textContent="حاول مرة أخرى";b.onclick=refresh;b.classList.remove("hidden");feedback("❌ "+msg)}
+function renderHome(){
+  clearFeedback();
+  home("🟢","جاهز","اختر العملية التي تريد تسجيلها.");
+  document.getElementById("actionButtons").classList.remove("hidden");
+
+  const checkin=document.getElementById("checkinBtn");
+  const checkout=document.getElementById("checkoutBtn");
+
+  checkin.onclick=()=>confirmAction("checkin");
+  checkout.onclick=()=>confirmAction("checkout");
+
+  document.getElementById("footer").textContent="جاهز";
+}
+function renderError(msg){
+  const previous=document.getElementById("temporaryRetry");
+  if(previous) previous.remove();
+  screen("home");
+  document.getElementById("actionButtons").classList.add("hidden");
+  home("⚠️","تعذر المتابعة",msg);
+  const old=document.getElementById("primary");
+  if(old){old.classList.add("hidden");}
+  feedback("❌ "+msg);
+  document.getElementById("homeProgress").classList.remove("show");
+
+  const retry=document.createElement("button");
+  retry.type="button";
+  retry.textContent="حاول مرة أخرى";
+  retry.onclick=refresh;
+  retry.id="temporaryRetry";
+  document.getElementById("home").appendChild(retry);
+}
 function openConfirm(action){S.action=action;screen("confirm");const in_=action==="checkin";document.getElementById("confirmIcon").textContent="📍";document.getElementById("confirmTitle").textContent=in_?"بدء الزيارة":"إنهاء الزيارة";document.getElementById("confirmMsg").textContent=in_?"سيتم تسجيل موقعك ووقت بدء الزيارة.":"سيتم تسجيل موقعك ووقت إنهاء الزيارة.";document.getElementById("confirmBtn").textContent=in_?"تأكيد بدء الزيارة":"تأكيد إنهاء الزيارة";document.getElementById("confirmBtn").onclick=postAction;document.getElementById("footer").textContent="مراجعة العملية"}
 function confirmAction(action){if(S.busy)return;openConfirm(action)}
 function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}))}
@@ -51,7 +141,7 @@ function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration(
 function showRegistration(){screen("registration");document.getElementById("footer").textContent="التسجيل مطلوب"}
 function showUsername(){screen("username");document.getElementById("footer").textContent="اسم المستخدم مطلوب"}
 function showInactive(){screen("inactive");document.getElementById("footer").textContent="الحساب غير مفعل"}
-async function refresh(){if(!initTelegram()||S.busy)return;busy(true);home("⏳","جاري التحقق","لحظة واحدة...");try{const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error(e);renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
+async function refresh(){if(!initTelegram()||S.busy)return;busy(true);home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}await refresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy)renderHome()};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
 </script></body></html>
