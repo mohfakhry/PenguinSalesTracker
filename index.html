@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>زيارات المبيعات</title>
+<title>دفتر الحضور</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" crossorigin="anonymous"></script>
@@ -107,7 +107,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 <body><main class="app">
 <header class="header">
   <!-- Change this text whenever you want to change the business name shown to employees. -->
-  <div id="businessName" class="business-name">زيارات المبيعات</div>
+  <div id="businessName" class="business-name">دفتر الحضور</div>
   <div id="welcome" class="user-name">جاري التحقق...</div>
 </header>
 <section class="main">
@@ -175,14 +175,23 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 <section id="username" class="screen hidden"><div class="icon">👤</div><h2>اسم المستخدم مطلوب</h2><p class="message">يجب أن يكون لديك اسم مستخدم في تيليجرام حتى يمكن استخدام النظام.</p><div class="steps"><strong>لإنشاء اسم مستخدم:</strong><br>1. افتح إعدادات تيليجرام.<br>2. افتح ملفك الشخصي أو تعديل الملف الشخصي.<br>3. اختر Username.<br>4. اختر اسماً فريداً واحفظه.</div><button id="retryBtn">تحقق مرة أخرى</button></section>
 <section id="inactive" class="screen hidden"><div class="icon warningIcon">⏸️</div><h2>الحساب غير مفعل</h2><p class="message">حسابك موجود في النظام ولكنه غير مفعل حالياً.</p><button id="reactivateBtn">إعادة تفعيل حسابي</button></section>
 
-</section><footer id="footer" class="footer">جاهز</footer></main>
+</section><footer id="footer" class="footer"><span id="footerStatus">جاهز</span><span id="footerVersion"></span></footer></main>
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
 // =========================
 // EDITABLE BUSINESS NAME
 // =========================
-const BUSINESS_NAME = "زيارات المبيعات";
+const BUSINESS_NAME = "دفتر الحضور";
 document.getElementById("businessName").textContent = BUSINESS_NAME;
+
+// =========================
+// EDITABLE VERSION NUMBER
+// =========================
+// Bump this manually whenever you redeploy index.html. Shows quietly
+// in the footer next to the status text, so you can tell at a glance
+// (or ask an employee to tell you) which build is actually live.
+const APP_VERSION = "v1.0";
+document.getElementById("footerVersion").textContent = " · " + APP_VERSION;
 
 const API_URL="https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT5mlsxCj7bZ7Ko50AMKJ-OcDW9Y7Ya5i19j-aQGeBJ_/exec";
 // Optional fallback. Prefer result.supervisors from the backend: [{name:"Ahmed",username:"ahmed"}].
@@ -276,7 +285,7 @@ function renderHome(){
   checkin.onclick=()=>confirmAction("checkin");
   checkout.onclick=()=>confirmAction("checkout");
 
-  document.getElementById("footer").textContent="جاهز";
+  document.getElementById("footerStatus").textContent="جاهز";
 }
 function renderError(msg){
   const previous=document.getElementById("temporaryRetry");
@@ -313,7 +322,7 @@ function openConfirm(action){
   document.getElementById("confirmMapBox").classList.remove("hasMap");
   document.getElementById("confirmMapSkeleton").textContent="📍 جارٍ تحميل الخريطة...";
 
-  document.getElementById("footer").textContent="مراجعة العملية";
+  document.getElementById("footerStatus").textContent="مراجعة العملية";
   startClock();
   loadConfirmLocationPreview(action);
 }
@@ -361,15 +370,15 @@ function showResult(action,r){
 
   const w=warningFrom(r);if(w)showWarning(w,r.supervisors);else hideWarning();
   document.getElementById("continueBtn").onclick=renderHome;
-  document.getElementById("footer").textContent="تم تسجيل العملية";
+  document.getElementById("footerStatus").textContent="تم تسجيل العملية";
 }
 function warningFrom(r){if(typeof r.warningMessage==="string"&&r.warningMessage.trim())return r.warningMessage.trim();if(typeof r.warning==="string"&&r.warning.trim())return r.warning.trim();if(r.warning&&typeof r.warning==="object")return r.warning.message||r.warning.text||null;if(r.hasWarning===true||r.missedCheckout===true||r.missedCheckin===true||r.previousVisitOpen===true||r.previousVisitUnclosed===true)return"يبدو أن الزيارة السابقة لم يتم تسجيل انتهائها. يمكنك متابعة عملك بشكل طبيعي، لكن يرجى إبلاغ المشرف.";return null}
 function showWarning(msg,list){document.getElementById("warning").classList.remove("hidden");document.getElementById("warningMsg").textContent=msg;const a=Array.isArray(list)&&list.length?list:DEFAULT_SUPERVISORS;const valid=a.filter(x=>x&&x.username);const box=document.getElementById("supervisorLinks");box.innerHTML="";valid.forEach(s=>{const u=String(s.username).replace(/^@/,"");const a=document.createElement("a");a.className="supervisor-link";a.href="https://t.me/"+encodeURIComponent(u);a.target="_blank";a.rel="noopener noreferrer";a.textContent="👤 "+(s.name||("@"+u));box.appendChild(a)});document.getElementById("supervisors").classList.toggle("hidden",!valid.length)}
 function hideWarning(){document.getElementById("warning").classList.add("hidden");document.getElementById("supervisors").classList.add("hidden");document.getElementById("supervisorLinks").innerHTML=""}
 function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration();return}if(r.errorCode==="INACTIVE"){showInactive();return}if(r.errorCode==="NO_USERNAME"){showUsername();return}renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR)}
-function showRegistration(){stopClock();screen("registration");document.getElementById("footer").textContent="التسجيل مطلوب"}
-function showUsername(){stopClock();screen("username");document.getElementById("footer").textContent="اسم المستخدم مطلوب"}
-function showInactive(){stopClock();screen("inactive");document.getElementById("footer").textContent="الحساب غير مفعل"}
+function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent="التسجيل مطلوب"}
+function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
+function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}await refresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
