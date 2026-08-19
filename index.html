@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>دفتر الحضور</title>
+<title>زيارات المبيعات</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" crossorigin="anonymous"></script>
@@ -70,6 +70,33 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .hidden{display:none!important}
 
 /* ===========================================================
+   HELP BUTTON + HELP CENTER OVERLAY
+   =========================================================== */
+.help-fab{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:120;width:auto;min-height:0;margin:0;padding:9px 14px 9px 12px;border-radius:99px;display:flex;align-items:center;gap:7px;background:var(--surface);color:var(--button);border:1px solid var(--border);box-shadow:0 6px 18px rgba(0,0,0,.10);font-size:13px;font-weight:800}
+.help-fab svg{width:18px;height:18px;flex:none}
+.help-fab:active{transform:scale(.95)}
+
+.help-overlay{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;justify-content:center;overflow-y:auto}
+.help-overlay.hidden{display:none}
+.help-inner{width:min(100%,480px);flex:1;padding:max(14px,env(safe-area-inset-top)) clamp(14px,5vw,22px) max(22px,env(safe-area-inset-bottom))}
+.help-header{display:flex;align-items:center;gap:10px;padding:8px 2px 16px}
+.help-close{width:38px;height:38px;min-height:0;margin:0;flex:none;border-radius:50%;background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--text);font-size:18px;padding:0}
+.help-title{font-size:clamp(19px,5vw,23px);font-weight:850}
+
+.tabs{display:flex;gap:6px;margin-top:2px}
+.tab{flex:1;min-height:0;margin:0;padding:12px 8px;border-radius:14px 14px 0 0;background:color-mix(in srgb,var(--muted) 9%,transparent);color:var(--muted);font-size:14px;font-weight:800;position:relative;top:1px;box-shadow:none}
+.tab.active{background:var(--surface);color:var(--button);top:0;border:1px solid var(--border);border-bottom-color:var(--surface)}
+
+.tabContent{background:var(--surface);border:1px solid var(--border);border-radius:0 16px 16px 16px;padding:6px 16px 4px;margin-bottom:18px}
+.faqItem{border-bottom:1px solid var(--border);padding:13px 0}
+.faqItem:last-child{border-bottom:0}
+.faqItem summary{cursor:pointer;font-weight:800;font-size:14.5px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.faqItem summary::-webkit-details-marker{display:none}
+.faqItem summary:after{content:"+";flex:none;font-size:18px;font-weight:700;color:var(--muted);transition:transform .15s}
+.faqItem[open] summary:after{content:"−"}
+.faqAnswer{margin-top:9px;color:var(--muted);font-size:13.5px;line-height:1.8}
+
+/* ===========================================================
    COMPACT-HEIGHT MODE
    Kicks in on short viewports (e.g. Huawei Mate 9 ≈ 640px CSS
    height, and shorter). Tightens spacing so every screen fits
@@ -94,6 +121,11 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .warning{margin-top:10px;padding:11px}
   .steps{margin-top:10px;padding:10px 14px;line-height:1.7}
   .footer{padding-top:8px}
+  .help-fab{padding:7px 12px 7px 10px;font-size:12px}
+  .help-inner{padding-top:max(8px,env(safe-area-inset-top))}
+  .help-header{padding:4px 2px 10px}
+  .help-title{font-size:18px}
+  .faqItem{padding:9px 0}
 }
 @media (max-height:600px){
   .icon{width:44px;height:44px;font-size:20px;margin-bottom:8px}
@@ -104,7 +136,13 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 }
 </style>
 </head>
-<body><main class="app">
+
+<body>
+<button id="helpFab" type="button" class="help-fab" aria-label="مساعدة">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+  <span>مساعدة</span>
+</button>
+<main class="app">
 <header class="header">
   <!-- Change this text whenever you want to change the business name shown to employees. -->
   <div id="businessName" class="business-name">دفتر الحضور</div>
@@ -176,6 +214,23 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 <section id="inactive" class="screen hidden"><div class="icon warningIcon">⏸️</div><h2>الحساب غير مفعل</h2><p class="message">حسابك موجود في النظام ولكنه غير مفعل حالياً.</p><button id="reactivateBtn">إعادة تفعيل حسابي</button></section>
 
 </section><footer id="footer" class="footer"><span id="footerStatus">جاهز</span><span id="footerVersion"></span></footer></main>
+
+<div id="helpOverlay" class="help-overlay hidden">
+  <div class="help-inner">
+    <div class="help-header">
+      <button id="helpCloseBtn" type="button" class="help-close" aria-label="رجوع">→</button>
+      <div class="help-title">مركز المساعدة</div>
+    </div>
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="employee">للموظف</button>
+      <button type="button" class="tab" data-tab="leader">لقائد الفريق</button>
+    </div>
+    <div class="tabContent">
+      <div id="helpList" class="faqList"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
 // =========================
@@ -199,6 +254,36 @@ const DEFAULT_SUPERVISORS=[];
 const ARABIC_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
 const S={busy:false,action:null,name:"الموظف",coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null};
+
+// =========================
+// EDITABLE HELP CENTER CONTENT
+// Edit the questions/answers below any time — the help screen
+// (top-left "مساعدة" button) renders straight from this list.
+// =========================
+const HELP_CONTENT={
+  employee:[
+    {q:"ليس لدي اسم مستخدم في تيليجرام، كيف أنشئه؟",a:"افتح إعدادات تيليجرام ← الملف الشخصي (Edit Profile) ← Username، ثم اختر اسماً فريداً واحفظه، وبعدها اضغط \"تحقق مرة أخرى\"."},
+    {q:"التطبيق يقول إن حسابي غير مسجل أو غير مفعل، ماذا أفعل؟",a:"اضغط الزر الظاهر على الشاشة (\"تسجيل حسابي\" أو \"إعادة تفعيل حسابي\"). إذا استمرت المشكلة تواصل مع المشرف."},
+    {q:"هل يمكنني كتابة رسالة للبوت والحصول على رد؟",a:"لا. البوت مخصص فقط لإرسال إشعارات النظام (مثل تنبيهات نسيان تسجيل الانصراف) ولا يستقبل أو يرد على المحادثات العادية. لأي استفسار أو مشكلة تواصل مع المشرف مباشرة عبر زر \"🆘 تواصل مع\" الظاهر عند الحاجة، أو من خلال هذه الصفحة."},
+    {q:"كيف أسجل بداية الزيارة؟",a:"من الشاشة الرئيسية اضغط \"بدء زيارة\"، راجع الوقت والموقع الظاهرين ثم اضغط \"بدء الزيارة الآن\". سيتم تسجيل موقعك ووقتك تلقائياً."},
+    {q:"كيف أنهي الزيارة؟",a:"اضغط \"إنهاء زيارة\" من الشاشة الرئيسية، راجع البيانات ثم اضغط \"إنهاء الزيارة الآن\"."},
+    {q:"لماذا يطلب التطبيق إذن الموقع؟",a:"لتحديد مكان الزيارة تلقائياً عند تسجيل البداية والنهاية. إذا رفضت الإذن بالخطأ يمكنك تفعيله من إعدادات المتصفح أو تيليجرام ثم إعادة المحاولة."},
+    {q:"سجّلت الدخول أو الخروج بشكل غير معتاد (نسيت تسجيل الانصراف السابق، أو نسيت تسجيل الحضور، أو ضغطت الزر مرتين)، ماذا يحدث؟",a:"لا داعي للقلق، سيتم تسجيل وقتك وموقعك بشكل طبيعي في كل الحالات. لكن التطبيق سيعرض لك تنبيهاً فورياً مع زر \"🆘 تواصل مع\" باسم قائد فريقك، وفي نفس الوقت يصل قائد الفريق تنبيه تلقائي على تيليجرام باسمك ليكون على علم بما حدث. اضغط الزر إذا احتجت توضيح الموقف معه مباشرة."},
+  ],
+  leader:[
+    {q:"كيف يتم تفعيل أو تسجيل حساب موظف جديد؟",a:"يطلب الموظف التسجيل أو إعادة التفعيل من داخل التطبيق، ثم تتم مراجعة الطلب واعتماده من لوحة الإدارة."},
+    {q:"هل يمكنني محادثة البوت مباشرة؟",a:"البوت لا يُستخدم للمحادثة العادية مع الموظفين، بل لإرسال الإشعارات. لكن بصفتك قائد فريق، يتحول البوت بالنسبة لك إلى لوحة تحكم مصغّرة للنظام."},
+    {q:"كيف أفتح لوحة التحكم الخاصة بي؟",a:"اكتب /start للبوت، أو أرسل أي كلمة أو رسالة، وستظهر لك فوراً مجموعة أزرار تحكم بالنظام."},
+    {q:"🔄 ما وظيفة زر \"إعادة نشر زر النظام\"؟",a:"يقوم بإعادة نشر زر فتح التطبيق (Web App) في المحادثة أو المجموعة، مفيد إذا اختفى الزر القديم أو أراد الموظفون الوصول إليه بسهولة من جديد."},
+    {q:"📢 ما وظيفة زر \"إرسال رسالة الترحيب للتسجيل\"؟",a:"يرسل رسالة ترحيبية تشرح للموظفين الجدد كيفية تسجيل حساباتهم وتفعيلها في النظام، مفيدة عند ضم موظفين جدد للمجموعة."},
+    {q:"📊 ما وظيفة زر \"إحصائية الموظفين\"؟",a:"يعرض لك ملخصاً سريعاً عن حالة الموظفين في النظام (عددهم، المفعّل وغير المفعّل، ومن يقوم بزيارة نشطة حالياً)."},
+    {q:"📈 ما وظيفة زر \"إرسال التقرير اليومي الآن\"؟",a:"يرسل تقرير الحضور والزيارات اليومي فوراً دون انتظار موعده المجدول تلقائياً، مفيد إذا احتجت للتقرير قبل وقته المعتاد."},
+    {q:"🆘 ما وظيفة زر \"تواصل مع\"؟",a:"يفتح لك محادثة تيليجرام مباشرة مع أحد مسؤولي (أدمن) تطبيق الويب نفسه. استخدمه إذا واجهت مشكلة تقنية في النظام أو احتجت دعماً منهم، وليس للتواصل مع الموظفين."},
+    {q:"كيف أعرف إذا سجّل أحد الموظفين حضوره أو انصرافه بشكل غير معتاد (نسي تسجيل سابق، أو سجّل مرتين)؟",a:"يصلك تنبيه تلقائي من البوت فور حدوث ذلك، يتضمن اسم الموظف، دون الحاجة لانتظار تواصله معك. في نفس الوقت يظهر للموظف تنبيه مماثل مع زر \"تواصل مع\" باسمك، ليتمكن من مراسلتك مباشرة على تيليجرام إذا احتاج توضيح الموقف."},
+    {q:"ما الفرق بين زر \"🆘 تواصل مع\" في قائمة /start وزر \"تواصل مع\" الذي يظهر للموظف داخل التطبيق؟",a:"الاسم متشابه لكن الوظيفة مختلفة تماماً: الزر داخل قائمة /start (الخاص بك) يوصلك بأحد مسؤولي تطبيق الويب لطلب دعم تقني. أما الزر الذي يظهر للموظف داخل التطبيق فيوصله بك أنت مباشرة عند حدوث مشكلة في تسجيل الحضور أو الانصراف."}
+  ]
+};
+let helpTab="employee";
 
 // ---- small formatting helpers ----
 function formatTime(d){let h=d.getHours();const m=String(d.getMinutes()).padStart(2,"0");const suffix=h>=12?"م":"ص";h=h%12;if(h===0)h=12;return String(h).padStart(2,"0")+":"+m+" "+suffix}
@@ -382,4 +467,35 @@ function showInactive(){stopClock();screen("inactive");document.getElementById("
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}await refresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
+
+// ---- help center ----
+function renderHelpList(){
+  const list=document.getElementById("helpList");
+  list.innerHTML="";
+  (HELP_CONTENT[helpTab]||[]).forEach((item,i)=>{
+    const d=document.createElement("details");
+    d.className="faqItem";
+    if(i===0)d.open=true;
+    const s=document.createElement("summary");
+    s.textContent=item.q;
+    const a=document.createElement("div");
+    a.className="faqAnswer";
+    a.textContent=item.a;
+    d.appendChild(s);d.appendChild(a);
+    list.appendChild(d);
+  });
+}
+function setHelpTab(tab){
+  helpTab=tab;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  renderHelpList();
+}
+function openHelp(){
+  setHelpTab(helpTab);
+  document.getElementById("helpOverlay").classList.remove("hidden");
+}
+function closeHelp(){document.getElementById("helpOverlay").classList.add("hidden")}
+document.getElementById("helpFab").onclick=openHelp;
+document.getElementById("helpCloseBtn").onclick=closeHelp;
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>setHelpTab(b.dataset.tab));
 </script></body></html>
