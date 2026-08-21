@@ -35,7 +35,7 @@ h2{margin:0;font-size:clamp(21px,6.5vw,27px);font-weight:850}
 
 .mapWrap{padding-bottom:14px}
 .mapBox{position:relative;width:100%;height:150px;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--muted) 10%,transparent)}
-.mapSkeleton{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 12px}
+.mapSkeleton{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 12px}
 .mapBox.hasMap .mapSkeleton{display:none}
 .leaflet-container{background:transparent;font-family:inherit}
 
@@ -78,7 +78,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .help-fab svg{width:18px;height:18px;flex:none}
 .help-fab:active{transform:scale(.95)}
 
-.help-overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:18px}
+.help-overlay{position:fixed;top:0;right:0;bottom:0;left:0;z-index:150;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:18px}
 .help-overlay.hidden{display:none}
 .help-inner{position:relative;width:min(100%,440px);max-height:min(82vh,640px);max-height:min(82dvh,640px);background:var(--surface);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;padding:16px 16px 14px;overflow:hidden}
 .help-header{flex:none;display:flex;align-items:center;padding:2px 2px 14px 44px}
