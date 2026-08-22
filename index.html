@@ -90,6 +90,9 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .tab.active{background:var(--surface);color:var(--button);top:0;border:1px solid var(--border);border-bottom-color:var(--surface)}
 
 .tabContent{background:var(--surface);border:1px solid var(--border);border-radius:0 16px 16px 16px;padding:6px 16px 4px;margin-bottom:18px;flex:1;min-height:0;overflow-y:auto}
+
+.success-box{width:min(100%,380px);background:var(--surface);border-radius:22px;padding:clamp(28px,8vw,36px) clamp(22px,6.5vw,32px);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:successPop .25s ease}
+@keyframes successPop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
 .faqItem{border-bottom:1px solid var(--border);padding:13px 0}
 .faqItem:last-child{border-bottom:0}
 .faqItem summary{cursor:pointer;font-weight:800;font-size:14.5px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -240,6 +243,14 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   </div>
 </div>
 
+<div id="successOverlay" class="help-overlay hidden">
+  <div class="success-box">
+    <div class="icon success">✓</div>
+    <h2 id="successTitle"></h2>
+    <p id="successMsg" class="message"></p>
+  </div>
+</div>
+
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
 // =========================
@@ -364,18 +375,20 @@ function home(icon,title,msg,tint){
   document.getElementById("homeTitle").textContent=title;
   document.getElementById("homeMsg").textContent=msg;
 }
+function showSuccessOverlay(title,msg,duration){
+  document.getElementById("successTitle").textContent=title;
+  document.getElementById("successMsg").textContent=msg;
+  const el=document.getElementById("successOverlay");
+  el.classList.remove("hidden");
+  setTimeout(()=>el.classList.add("hidden"),duration||2200);
+}
 function feedback(msg){const e=document.getElementById("feedback");e.textContent=msg;e.className="feedback show"}
 function clearFeedback(){document.getElementById("feedback").className="feedback"}
 function renderHome(){
   const previousRetry=document.getElementById("temporaryRetry");
   if(previousRetry)previousRetry.remove();
   clearFeedback();
-  if(S.justRegistered){
-    S.justRegistered=false;
-    home("✅","تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.","success");
-  }else{
-    home("🏬","جاهز لتسجيل زيارة","سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.","success");
-  }
+  home("🏬","جاهز لتسجيل زيارة","سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.","success");
   document.getElementById("actionButtons").classList.remove("hidden");
 
   const checkin=document.getElementById("checkinBtn");
@@ -478,7 +491,7 @@ function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration(
 function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent="التسجيل مطلوب"}
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
-async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
