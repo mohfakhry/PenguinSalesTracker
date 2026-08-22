@@ -265,7 +265,7 @@ document.getElementById("businessName").textContent = BUSINESS_NAME;
 // Bump this manually whenever you redeploy index.html. Shows quietly
 // in the footer next to the status text, so you can tell at a glance
 // (or ask an employee to tell you) which build is actually live.
-const APP_VERSION = "Penguin Sales Tracker v1.0 [DEBUG-BUILD-CHECK] ";
+const APP_VERSION = "Penguin Sales Tracker v1.0 ";
 document.getElementById("footerVersion").textContent = " · " + APP_VERSION;
 
 const API_URL="https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT5mlsxCj7bZ7Ko50AMKJ-OcDW9Y7Ya5i19j-aQGeBJ_/exec";
@@ -494,7 +494,10 @@ function showInactive(){stopClock();screen("inactive");document.getElementById("
 async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
-document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
+document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;
+// Dev-only: open the page with ?previewSuccess=1 to preview the registration-success overlay without re-registering. Safe to remove any time.
+if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}
+else if(initTelegram())refresh();
 
 // ---- help center ----
 function renderHelpList(){
