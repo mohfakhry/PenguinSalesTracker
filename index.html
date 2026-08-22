@@ -224,6 +224,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 <section id="registration" class="screen hidden"><div class="icon">👤</div><h2>تسجيل حسابك</h2><p class="message">تم التعرف على حساب تيليجرام الخاص بك، ولكن لم يتم العثور عليه في نظام الموظفين.</p><button id="registerBtn">تسجيل حسابي</button></section>
 <section id="username" class="screen hidden"><div class="icon">👤</div><h2>اسم المستخدم مطلوب</h2><p class="message">يجب أن يكون لديك اسم مستخدم في تيليجرام حتى يمكن استخدام النظام.</p><div class="steps"><strong>لإنشاء اسم مستخدم:</strong><br>1. افتح إعدادات تيليجرام.<br>2. افتح ملفك الشخصي أو تعديل الملف الشخصي.<br>3. اختر Username.<br>4. اختر اسماً فريداً واحفظه.</div><button id="retryBtn">تحقق مرة أخرى</button></section>
 <section id="inactive" class="screen hidden"><div class="icon warningIcon">⏸️</div><h2>الحساب غير مفعل</h2><p class="message">حسابك موجود في النظام ولكنه غير مفعل حالياً.</p><button id="reactivateBtn">إعادة تفعيل حسابي</button></section>
+<section id="botNotStarted" class="screen hidden"><div class="icon">🤖</div><h2>تفعيل البوت مطلوب</h2><p class="message">لإتمام التسجيل، يجب عليك بدء المحادثة مع البوت أولاً حتى يتمكن من إرسال الإشعارات لك.</p><button id="startBotBtn">فتح البوت الآن</button><button id="retryBotBtn" class="back">لقد قمت ببدء البوت</button></section>
 
 </section><footer id="footer" class="footer"><span id="footerStatus">جاهز</span><span id="footerVersion"></span></footer></main>
 
@@ -273,7 +274,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT
 const DEFAULT_SUPERVISORS=[];
 const ARABIC_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
-const S={busy:false,action:null,name:"الموظف",isLeader:false,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false};
+const S={busy:false,action:null,name:"الموظف",isLeader:false,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
 
 // =========================
 // EDITABLE HELP CENTER CONTENT
@@ -326,7 +327,10 @@ function ensureConfirmMap(lat,lng){
   document.getElementById("confirmMapBox").classList.add("hasMap");
   requestAnimationFrame(()=>confirmMap&&confirmMap.invalidateSize());
 }
+const geocodeCache = {};
 async function reverseGeocode(lat,lng){
+  const cacheKey = lat.toFixed(4) + "," + lng.toFixed(4); // Cache at ~11m precision
+  if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
   try{
     if(geocodeAbort)geocodeAbort.abort();
     geocodeAbort=new AbortController();
@@ -338,8 +342,11 @@ async function reverseGeocode(lat,lng){
     if(!data)return null;
     const a=data.address||{};
     const parts=[a.road||a.pedestrian||a.neighbourhood,a.suburb||a.city_district||a.city||a.town||a.village].filter(Boolean);
-    if(parts.length)return parts.join("، ");
-    return data.display_name?data.display_name.split(",").slice(0,2).join("،"):null;
+    let addr;
+    if(parts.length) { addr = parts.join("، "); }
+    else { addr = data.display_name?data.display_name.split(",").slice(0,2).join("،"):null; }
+    if (addr) geocodeCache[cacheKey] = addr;
+    return addr;
   }catch(e){return null}
 }
 async function loadConfirmLocationPreview(action){
@@ -364,7 +371,7 @@ async function loadConfirmLocationPreview(action){
 function initTelegram(){if(!tg){renderError("يجب فتح النظام من داخل تيليجرام.");return false}try{tg.ready();tg.expand()}catch(e){}return true}
 function initData(){if(!tg||!tg.initData)throw Error("Telegram initData is unavailable.");return tg.initData}
 async function api(action,extra={}){let r;try{r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,initData:initData(),...extra}),cache:"no-store",redirect:"follow"})}catch(e){throw Error("BACKEND_CONNECTION_FAILED")}const raw=await r.text();let x;try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");return x}
-const ids=["home","confirm","result","registration","username","inactive"];
+const ids=["home","confirm","result","registration","username","inactive","botNotStarted"];
 function screen(id){ids.forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id))}
 function busy(v){S.busy=v;document.querySelectorAll("button").forEach(b=>b.disabled=v);document.getElementById("homeProgress").classList.toggle("show",v);document.getElementById("confirmProgress").classList.toggle("show",v)}
 function home(icon,title,msg,tint){
@@ -442,6 +449,11 @@ function confirmAction(action){if(S.busy)return;openConfirm(action)}
 function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}))}
 async function postAction(){
   if(S.busy)return;
+  if(Date.now() - S.initTime > 55 * 60 * 1000) {
+    alert("انتهت جلسة العمل بسبب عدم النشاط لفترة طويلة. سيتم إغلاق التطبيق الآن، يرجى فتحه مرة أخرى.");
+    if(tg)tg.close();
+    return;
+  }
   if(!["checkin","checkout"].includes(S.action)){renderError(ERR.INVALID_ACTION);return}
   if(!navigator.geolocation){renderError("المتصفح لا يدعم تحديد الموقع الجغرافي.");return}
   busy(true);
@@ -487,14 +499,15 @@ function showResult(action,r){
 function warningFrom(r){if(typeof r.warningMessage==="string"&&r.warningMessage.trim())return r.warningMessage.trim();if(typeof r.warning==="string"&&r.warning.trim())return r.warning.trim();if(r.warning&&typeof r.warning==="object")return r.warning.message||r.warning.text||null;if(r.hasWarning===true||r.missedCheckout===true||r.missedCheckin===true||r.previousVisitOpen===true||r.previousVisitUnclosed===true)return"يبدو أن الزيارة السابقة لم يتم تسجيل انتهائها. يمكنك متابعة عملك بشكل طبيعي، لكن يرجى إبلاغ المشرف.";return null}
 function showWarning(msg,list){document.getElementById("warning").classList.remove("hidden");document.getElementById("warningMsg").textContent=msg;const a=Array.isArray(list)&&list.length?list:DEFAULT_SUPERVISORS;const valid=a.filter(x=>x&&x.username);const box=document.getElementById("supervisorLinks");box.innerHTML="";valid.forEach(s=>{const u=String(s.username).replace(/^@/,"");const a=document.createElement("a");a.className="supervisor-link";a.href="https://t.me/"+encodeURIComponent(u);a.target="_blank";a.rel="noopener noreferrer";a.textContent="👤 "+(s.name||("@"+u));box.appendChild(a)});document.getElementById("supervisors").classList.toggle("hidden",!valid.length)}
 function hideWarning(){document.getElementById("warning").classList.add("hidden");document.getElementById("supervisors").classList.add("hidden");document.getElementById("supervisorLinks").innerHTML=""}
-function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration();return}if(r.errorCode==="INACTIVE"){showInactive();return}if(r.errorCode==="NO_USERNAME"){showUsername();return}renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR)}
+function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration();return}if(r.errorCode==="BOT_NOT_STARTED"){showBotNotStarted(r.botUrl);return}if(r.errorCode==="INACTIVE"){showInactive();return}if(r.errorCode==="NO_USERNAME"){showUsername();return}renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR)}
 function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent="التسجيل مطلوب"}
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
+function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent="تفعيل البوت مطلوب";if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
 async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
-async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
-document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;
+async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
+document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
 // Dev-only: open the page with ?previewSuccess=1 to preview the registration-success overlay without re-registering. Safe to remove any time.
 if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}
 else if(initTelegram())refresh();
