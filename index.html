@@ -262,7 +262,7 @@ const API_URL="https://script.google.com/macros/s/AKfycbzTRKLJ0r3wHiCUOWpRJo5dDT
 const DEFAULT_SUPERVISORS=[];
 const ARABIC_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
-const S={busy:false,action:null,name:"الموظف",isLeader:false,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null};
+const S={busy:false,action:null,name:"الموظف",isLeader:false,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false};
 
 // =========================
 // EDITABLE HELP CENTER CONTENT
@@ -370,7 +370,12 @@ function renderHome(){
   const previousRetry=document.getElementById("temporaryRetry");
   if(previousRetry)previousRetry.remove();
   clearFeedback();
-  home("🏬","جاهز لتسجيل زيارة","سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.","success");
+  if(S.justRegistered){
+    S.justRegistered=false;
+    home("✅","تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.","success");
+  }else{
+    home("🏬","جاهز لتسجيل زيارة","سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.","success");
+  }
   document.getElementById("actionButtons").classList.remove("hidden");
 
   const checkin=document.getElementById("checkinBtn");
@@ -473,8 +478,9 @@ function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration(
 function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent="التسجيل مطلوب"}
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
-async function refresh(){if(!initTelegram()||S.busy)return;busy(true);home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}finally{busy(false)}}
-async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}await refresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
+async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
+async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;if(initTelegram())refresh();
 
 // ---- help center ----
