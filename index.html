@@ -370,7 +370,7 @@ async function loadConfirmLocationPreview(action){
 
 function initTelegram(){if(!tg){renderError("يجب فتح النظام من داخل تيليجرام.");return false}try{tg.ready();tg.expand()}catch(e){}return true}
 function initData(){if(!tg||!tg.initData)throw Error("Telegram initData is unavailable.");return tg.initData}
-async function api(action,extra={}){let r;try{r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,initData:initData(),...extra}),cache:"no-store",redirect:"follow"})}catch(e){throw Error("BACKEND_CONNECTION_FAILED")}const raw=await r.text();let x;try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");return x}
+async function api(action,extra={}){let r;try{r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({action,initData:initData(),...extra}),cache:"no-store",redirect:"follow"})}catch(e){throw Error(ERR.BACKEND_CONNECTION_FAILED)}const raw=await r.text();let x;try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");return x}
 const ids=["home","confirm","result","registration","username","inactive","botNotStarted"];
 function screen(id){ids.forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id))}
 function busy(v){S.busy=v;document.querySelectorAll("button").forEach(b=>b.disabled=v);document.getElementById("homeProgress").classList.toggle("show",v);document.getElementById("confirmProgress").classList.toggle("show",v)}
