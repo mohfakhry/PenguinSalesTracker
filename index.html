@@ -370,17 +370,25 @@ async function loadConfirmLocationPreview(action){
 
 function initTelegram(){if(!tg){renderError("يجب فتح النظام من داخل تيليجرام.");return false}try{tg.ready();tg.expand()}catch(e){}return true}
 function initData(){if(!tg||!tg.initData)throw Error("Telegram initData is unavailable.");return tg.initData}
+let __jsonpSeq=0;
+function apiJsonp(action,extra={}){
+  return new Promise((resolve,reject)=>{
+    const cbName="__apiCb"+(__jsonpSeq++)+"_"+Date.now();
+    const params=new URLSearchParams({action,initData:initData(),callback:cbName});
+    Object.entries(extra).forEach(([k,v])=>params.set(k,String(v)));
+    const script=document.createElement("script");
+    let done=false;
+    const cleanup=()=>{if(done)return;done=true;delete window[cbName];script.remove();clearTimeout(timer)};
+    const timer=setTimeout(()=>{cleanup();reject(Error(ERR.BACKEND_CONNECTION_FAILED))},15000);
+    window[cbName]=(data)=>{cleanup();resolve(data)};
+    script.onerror=()=>{cleanup();reject(Error(ERR.BACKEND_CONNECTION_FAILED))};
+    script.src=API_URL+"?"+params.toString();
+    document.body.appendChild(script);
+  });
+}
 async function api(action,extra={}){
-  const params=new URLSearchParams({action,initData:initData()});
-  Object.entries(extra).forEach(([k,v])=>params.set(k,String(v)));
-  let r;
-  try{
-    r=await fetch(API_URL+"?"+params.toString(),{method:"GET",cache:"no-store",redirect:"follow"});
-  }catch(e){throw Error(ERR.BACKEND_CONNECTION_FAILED)}
-  const raw=await r.text();
-  let x;
-  try{x=JSON.parse(raw)}catch(e){throw Error("استجابة الخادم غير صالحة.")}
-  if(!r.ok)throw Error(x.error||"الخادم غير متاح حالياً.");
+  const x=await apiJsonp(action,extra);
+  if(!x||typeof x!=="object")throw Error("استجابة الخادم غير صالحة.");
   return x;
 }
 const ids=["home","confirm","result","registration","username","inactive","botNotStarted"];
