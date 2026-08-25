@@ -72,9 +72,14 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .hidden{display:none!important}
 
 /* ===========================================================
-   HELP BUTTON + HELP CENTER OVERLAY
+   HEADER ACTION BUTTONS (admin-management + help)
+   Stacked vertically in the header's end column - the admin-only
+   management button sits above the help button, per the requested
+   layout. Both share the same pill styling.
    =========================================================== */
-.help-fab{flex:none;justify-self:end;width:auto;min-height:0;margin:0;padding:9px 14px 9px 12px;border-radius:99px;display:flex;align-items:center;gap:7px;background:var(--surface);color:var(--button);border:1px solid var(--border);box-shadow:0 6px 18px rgba(0,0,0,.10);font-size:13px;font-weight:800;white-space:nowrap}
+.header-actions{grid-column:3;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+
+.help-fab{flex:none;width:auto;min-height:0;margin:0;padding:9px 14px 9px 12px;border-radius:99px;display:flex;align-items:center;gap:7px;background:var(--surface);color:var(--button);border:1px solid var(--border);box-shadow:0 6px 18px rgba(0,0,0,.10);font-size:13px;font-weight:800;white-space:nowrap}
 .help-fab svg{width:18px;height:18px;flex:none}
 .help-fab:active{transform:scale(.95)}
 
@@ -127,6 +132,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .warning{margin-top:10px;padding:11px}
   .steps{margin-top:10px;padding:10px 14px;line-height:1.7}
   .footer{padding-top:8px}
+  .header-actions{gap:6px}
   .help-fab{padding:7px 12px 7px 10px;font-size:12px}
   .help-overlay{padding:10px}
   .help-inner{padding:12px 12px 10px;max-height:90vh;max-height:90dvh}
@@ -155,10 +161,16 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
     <div id="welcome" class="user-name">جاري التحقق...</div>
   </div>
   <img class="header-logo" src="logo.png" alt="" onerror="this.style.display='none'">
-  <button id="helpFab" type="button" class="help-fab" aria-label="مساعدة">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-    <span>مساعدة</span>
-  </button>
+  <div class="header-actions">
+    <button id="adminManageFab" type="button" class="help-fab hidden" aria-label="إدارة الموظفين والفروع">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <span>الإدارة</span>
+    </button>
+    <button id="helpFab" type="button" class="help-fab" aria-label="مساعدة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <span>مساعدة</span>
+    </button>
+  </div>
 </header>
 <section class="main">
 
@@ -214,7 +226,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
     </div>
   </div>
   <div id="activeBanner" class="activeBanner hidden">
-    <div class="txt"><div class="title">الزيارة نشطة الآن</div>يرجى تذكر إنهاء الزيارة عند الانتهاء.</div>
+    <div class="txt"><div id="activeBannerTitle" class="title">الزيارة نشطة الآن</div><span id="activeBannerTxt">يرجى تذكر إنهاء الزيارة عند الانتهاء.</span></div>
     <div class="icon2">🛡️</div>
   </div>
   <div id="warning" class="warning hidden"><div class="warningTitle">⚠️ تنبيه</div><div id="warningMsg"></div><div id="supervisors" class="supervisors hidden"><div style="margin:10px 0 4px;font-weight:800">إبلاغ المشرف</div><div id="supervisorLinks"></div></div></div>
@@ -257,6 +269,9 @@ const tg=window.Telegram&&window.Telegram.WebApp;
 // =========================
 // EDITABLE BUSINESS NAME
 // =========================
+// Shown before the employee's status is known (brief "جاري التحقق..."
+// moment) and as the free-roam fallback. Once /status resolves,
+// UI_TEXT[S.locationMode].businessName overrides this - see doRefresh().
 const BUSINESS_NAME = "زيارات المبيعات";
 document.getElementById("businessName").textContent = BUSINESS_NAME;
 
@@ -266,7 +281,7 @@ document.getElementById("businessName").textContent = BUSINESS_NAME;
 // Bump this manually whenever you redeploy index.html. Shows quietly
 // in the footer next to the status text, so you can tell at a glance
 // (or ask an employee to tell you) which build is actually live.
-const APP_VERSION = "Penguin Sales Tracker v1.0 ";
+const APP_VERSION = "Penguin Sales Tracker v1.1 ";
 document.getElementById("footerVersion").textContent = " · " + APP_VERSION;
 
 const API_URL="https://script.google.com/macros/s/AKfycbzS1rCL5jtyr5uZd_KRY0ScdXZ4cUUmOUsuyWEpWSL1X13048cjnSQpd5lOKpuN2w/exec";
@@ -274,7 +289,67 @@ const API_URL="https://script.google.com/macros/s/AKfycbzS1rCL5jtyr5uZd_KRY0ScdX
 const DEFAULT_SUPERVISORS=[];
 const ARABIC_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
-const S={busy:false,action:null,name:"الموظف",isLeader:false,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
+
+// =========================
+// MODE-AWARE UI TEXT
+// =========================
+// Everything that differs between a free-roam employee (sales-visit
+// language) and a geofenced employee (attendance language). Driven by
+// S.locationMode, which comes back from the backend's /status call
+// (getMiniAppStatus in 04_Attendance.gs) once the employee is known -
+// defaults to "freeRoam" until then. The map/reverse-geocode preview
+// itself is unaffected either way - only the surrounding text changes.
+const UI_TEXT={
+  freeRoam:{
+    businessName:"زيارات المبيعات",
+    homeIcon:"🏬",
+    homeTitle:"جاهز لتسجيل زيارة",
+    homeMsg:"سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.",
+    checkinLabel:"بدء زيارة",
+    checkoutLabel:"إنهاء زيارة",
+    confirmTitleIn:"تأكيد بدء الزيارة",
+    confirmTitleOut:"تأكيد إنهاء الزيارة",
+    confirmMsgIn:"سيتم تسجيل المعلومات التالية:",
+    confirmMsgOut:"سيتم تسجيل إنهاء الزيارة وتسجيل المعلومات التالية:",
+    confirmBtnIn:"بدء الزيارة الآن",
+    confirmBtnOut:"إنهاء الزيارة الآن",
+    resultTitleIn:"تم بدء الزيارة بنجاح",
+    resultTitleOut:"تم إنهاء الزيارة بنجاح",
+    resultMsgIn:"تم تسجيل موقعك ووقت بدء الزيارة بنجاح.",
+    resultMsgOut:"تم تسجيل موقعك ووقت إنهاء الزيارة بنجاح.",
+    resultTimeLabelIn:"وقت البدء",
+    resultTimeLabelOut:"وقت الانتهاء",
+    activeBannerTitle:"الزيارة نشطة الآن",
+    activeBannerTxt:"يرجى تذكر إنهاء الزيارة عند الانتهاء.",
+    registeredMsg:"أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك."
+  },
+  geofence:{
+    businessName:"تسجيل الحضور و الإنصراف",
+    homeIcon:"🏢",
+    homeTitle:"جاهز لتسجيل الحضور",
+    homeMsg:"سجل حضورك أو انصرافك، مع التأكد من تواجدك داخل نطاق الفرع المخصص لك.",
+    checkinLabel:"حضور",
+    checkoutLabel:"إنصراف",
+    confirmTitleIn:"تأكيد الحضور",
+    confirmTitleOut:"تأكيد الانصراف",
+    confirmMsgIn:"سيتم التحقق من موقعك وتسجيل المعلومات التالية:",
+    confirmMsgOut:"سيتم التحقق من موقعك وتسجيل الانصراف والمعلومات التالية:",
+    confirmBtnIn:"تسجيل الحضور الآن",
+    confirmBtnOut:"تسجيل الانصراف الآن",
+    resultTitleIn:"تم تسجيل الحضور بنجاح",
+    resultTitleOut:"تم تسجيل الانصراف بنجاح",
+    resultMsgIn:"تم تسجيل موقعك ووقت الحضور بنجاح.",
+    resultMsgOut:"تم تسجيل موقعك ووقت الانصراف بنجاح.",
+    resultTimeLabelIn:"وقت الحضور",
+    resultTimeLabelOut:"وقت الانصراف",
+    activeBannerTitle:"دوامك نشط الآن",
+    activeBannerTxt:"يرجى تذكر تسجيل الانصراف عند الانتهاء.",
+    registeredMsg:"أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل حضورك وانصرافك."
+  }
+};
+function V(){return UI_TEXT[S.locationMode==="geofence"?"geofence":"freeRoam"]}
+
+const S={busy:false,action:null,name:"الموظف",isLeader:false,locationMode:"freeRoam",coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
 
 // =========================
 // EDITABLE HELP CENTER CONTENT
@@ -313,6 +388,8 @@ function startClock(){stopClock();const tick=()=>{const el=document.getElementBy
 function stopClock(){if(S.clockTimer){clearInterval(S.clockTimer);S.clockTimer=null}}
 
 // ---- map + reverse geocoding ----
+// Unchanged for both employee types - the map preview stays as-is
+// even for geofenced employees, per the request to keep it.
 let confirmMap=null,confirmMarker=null,geocodeAbort=null;
 function ensureConfirmMap(lat,lng){
   if(typeof L==="undefined")return;
@@ -415,11 +492,14 @@ function renderHome(){
   const previousRetry=document.getElementById("temporaryRetry");
   if(previousRetry)previousRetry.remove();
   clearFeedback();
-  home("🏬","جاهز لتسجيل زيارة","سجل بداية زيارتك لدى العميل لمتابعة وتسجيل الوقت والموقع تلقائياً.","success");
+  const v=V();
+  home(v.homeIcon,v.homeTitle,v.homeMsg,"success");
   document.getElementById("actionButtons").classList.remove("hidden");
 
   const checkin=document.getElementById("checkinBtn");
   const checkout=document.getElementById("checkoutBtn");
+  checkin.querySelector("span:last-child").textContent=v.checkinLabel;
+  checkout.querySelector("span:last-child").textContent=v.checkoutLabel;
 
   checkin.onclick=()=>confirmAction("checkin");
   checkout.onclick=()=>confirmAction("checkout");
@@ -446,14 +526,15 @@ function openConfirm(action){
   S.action=action;S.coords=null;S.coordsAt=0;S.address=null;
   screen("confirm");
   const in_=action==="checkin";
+  const v=V();
 
   document.getElementById("confirmIcon").className="icon"+(in_?"":" warningIcon");
   document.getElementById("confirmIcon").textContent=in_?"📍":"🚩";
-  document.getElementById("confirmTitle").textContent=in_?"تأكيد بدء الزيارة":"تأكيد إنهاء الزيارة";
-  document.getElementById("confirmMsg").textContent=in_?"سيتم تسجيل المعلومات التالية:":"سيتم تسجيل إنهاء الزيارة وتسجيل المعلومات التالية:";
+  document.getElementById("confirmTitle").textContent=in_?v.confirmTitleIn:v.confirmTitleOut;
+  document.getElementById("confirmMsg").textContent=in_?v.confirmMsgIn:v.confirmMsgOut;
 
   const btn=document.getElementById("confirmBtn");
-  btn.innerHTML=in_?'<span class="btnIcon">▶</span><span>بدء الزيارة الآن</span>':'<span class="btnIcon">■</span><span>إنهاء الزيارة الآن</span>';
+  btn.innerHTML=in_?'<span class="btnIcon">▶</span><span>'+v.confirmBtnIn+'</span>':'<span class="btnIcon">■</span><span>'+v.confirmBtnOut+'</span>';
   btn.classList.toggle("danger",!in_);
   btn.onclick=postAction;
 
@@ -503,14 +584,19 @@ function showResult(action,r){
   stopClock();
   screen("result");
   const in_=action==="checkin";
-  document.getElementById("resultTitle").textContent=in_?"تم بدء الزيارة بنجاح":"تم إنهاء الزيارة بنجاح";
-  document.getElementById("resultMsg").textContent=r.message||(in_?"تم تسجيل موقعك ووقت بدء الزيارة بنجاح.":"تم تسجيل موقعك ووقت إنهاء الزيارة بنجاح.");
+  const v=V();
+  document.getElementById("resultTitle").textContent=in_?v.resultTitleIn:v.resultTitleOut;
+  document.getElementById("resultMsg").textContent=r.message||(in_?v.resultMsgIn:v.resultMsgOut);
 
   const time=(S.lastSubmit&&S.lastSubmit.time)||new Date();
-  document.getElementById("resultTimeLabel").textContent=in_?"وقت البدء":"وقت الانتهاء";
+  document.getElementById("resultTimeLabel").textContent=in_?v.resultTimeLabelIn:v.resultTimeLabelOut;
   document.getElementById("resultTime").textContent=formatTime(time)+"  ·  "+formatDate(time);
   document.getElementById("resultAddress").textContent=(S.lastSubmit&&S.lastSubmit.address)||"تم تسجيل الموقع";
   document.getElementById("activeBanner").classList.toggle("hidden",!in_);
+  if(in_){
+    document.getElementById("activeBannerTitle").textContent=v.activeBannerTitle;
+    document.getElementById("activeBannerTxt").textContent=v.activeBannerTxt;
+  }
 
   const w=warningFrom(r);if(w)showWarning(w,r.supervisors);else hideWarning();
   document.getElementById("continueBtn").onclick=renderHome;
@@ -524,13 +610,22 @@ function showRegistration(){stopClock();screen("registration");document.getEleme
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
 function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent="تفعيل البوت مطلوب";if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
-async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
 // Dev-only: open the page with ?previewSuccess=1 to preview the registration-success overlay without re-registering. Safe to remove any time.
-if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح","أصبح حسابك مفعّلاً في النظام. يمكنك الآن تسجيل زياراتك.")}
+if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}
 else if(initTelegram())refresh();
+
+// ---- admin-only management placeholder (employees + branches) ----
+// Backend/UI for this is intentionally not built yet - this button is
+// just placed and gated behind S.isLeader for now, per the request to
+// "place it" ahead of building the actual management flow.
+document.getElementById("adminManageFab").onclick=()=>{
+  const msg="لوحة إدارة الموظفين والفروع قيد التطوير، ستتوفر قريباً.";
+  if(tg&&typeof tg.showAlert==="function")tg.showAlert(msg);else alert(msg);
+};
 
 // ---- help center ----
 function renderHelpList(){
