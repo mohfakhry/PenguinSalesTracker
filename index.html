@@ -91,8 +91,8 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .help-title{font-size:clamp(19px,5vw,23px);font-weight:850}
 
 .tabs{flex:none;display:flex;gap:6px;margin-top:2px}
-.tab{flex:1;min-height:0;margin:0;padding:12px 8px;border-radius:14px 14px 0 0;background:color-mix(in srgb,var(--muted) 9%,transparent);color:var(--muted);font-size:14px;font-weight:800;position:relative;top:1px;box-shadow:none}
-.tab.active{background:var(--surface);color:var(--button);top:0;border:1px solid var(--border);border-bottom-color:var(--surface)}
+.tab,.adminTabBtn{flex:1;min-height:0;margin:0;padding:12px 8px;border-radius:14px 14px 0 0;background:color-mix(in srgb,var(--muted) 9%,transparent);color:var(--muted);font-size:14px;font-weight:800;position:relative;top:1px;box-shadow:none}
+.tab.active,.adminTabBtn.active{background:var(--surface);color:var(--button);top:0;border:1px solid var(--border);border-bottom-color:var(--surface)}
 
 .tabContent{background:var(--surface);border:1px solid var(--border);border-radius:0 16px 16px 16px;padding:6px 16px 4px;margin-bottom:18px;flex:1;min-height:0;overflow-y:auto}
 
@@ -148,6 +148,51 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .mapBox{height:78px}
   h2{font-size:17px}
   .message{font-size:13px}
+}
+
+/* ===========================================================
+   ADMIN MANAGEMENT PANEL (employees + branches)
+   Reuses the help-overlay/tabs shell as-is. .adminTabBtn shares the
+   .tab ruleset below (extended selectors) rather than duplicating it,
+   but deliberately isn't just named ".tab" - the page's one existing
+   ".tab" click-binder (bottom of the script) queries that class
+   globally, and would wrongly attach itself to these buttons too if
+   they carried it.
+   =========================================================== */
+input[type=text],select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:14px}
+input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--button) 40%,transparent);outline-offset:1px}
+
+.adminPanel{display:flex;flex-direction:column}
+.adminList{padding:2px 0}
+
+.empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
+.empRowTop{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.empCode{font-size:11px;font-weight:800;color:var(--muted);background:color-mix(in srgb,var(--muted) 12%,transparent);padding:3px 8px;border-radius:8px;flex:none}
+.empUsername{font-size:12px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empStatusDot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
+.empStatusDot.on{background:var(--success)}
+.dirtyDot{width:9px;height:9px;border-radius:50%;background:var(--warning);flex:none}
+.resetIconBtn{width:auto;min-height:0;margin:0;padding:5px 9px;border-radius:9px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:13px;flex:none}
+.empRowFields{display:flex;flex-direction:column;gap:8px}
+
+.adminSaveBar{position:sticky;bottom:0;background:var(--surface);padding:10px 0 2px;margin-top:4px}
+.adminSaveBar button{margin-top:0}
+
+.branchRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;margin:6px 0;background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;cursor:pointer;text-align:right}
+.branchRow:active{transform:scale(.98)}
+
+.formCard{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:8px}
+.formTitle{margin:0 0 4px;font-size:15px;font-weight:850}
+.formLabel{display:block;font-size:12px;color:var(--muted);margin:11px 0 5px;font-weight:750}
+.formInline{display:flex;gap:8px;align-items:stretch}
+.formInline input{flex:1}
+.formInlineBtn{width:auto;min-height:0;margin:0;padding:0 14px;border-radius:11px;font-size:12.5px;white-space:nowrap;background:var(--button);color:var(--buttonText);border:0}
+.formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
+.formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+@media (max-height:700px){
+  .empRow{margin:6px 0;padding:9px 12px}
+  .formCard{padding:12px}
 }
 </style>
 </head>
@@ -264,6 +309,78 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   </div>
 </div>
 
+<div id="adminOverlay" class="help-overlay hidden">
+  <div class="help-inner">
+    <div class="help-header">
+      <button id="adminCloseBtn" type="button" class="help-close" aria-label="إغلاق">×</button>
+      <div class="help-title">لوحة الإدارة</div>
+    </div>
+    <div class="tabs">
+      <button type="button" id="adminEmpTabBtn" class="adminTabBtn active" data-admintab="employees">الموظفون</button>
+      <button type="button" id="adminBranchTabBtn" class="adminTabBtn hidden" data-admintab="branches">الفروع</button>
+    </div>
+    <div class="tabContent">
+      <section id="adminEmployeesPanel" class="adminPanel">
+        <datalist id="jobTitleSuggestions">
+          <!-- EDITABLE JOB TITLE SUGGESTIONS - shown as a dropdown when tapping the Job Title field below, but the field still accepts free typing since JOB_TITLE is a free-text column on the backend (00_Config.gs). Edit this list to match your own business's roles. -->
+          <option value="مندوب مبيعات">
+          <option value="مشرف مبيعات">
+          <option value="كاشير">
+          <option value="أمين مخزن">
+          <option value="موظف استقبال">
+        </datalist>
+        <div id="adminEmpList" class="adminList"></div>
+        <div class="steps">إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
+        <div class="adminSaveBar">
+          <button type="button" id="adminEmpSaveBtn" disabled>لا توجد تغييرات</button>
+        </div>
+      </section>
+      <section id="adminBranchesPanel" class="adminPanel hidden">
+        <div id="adminBranchList" class="adminList"></div>
+        <div class="formCard">
+          <h3 id="branchFormTitle" class="formTitle">إضافة فرع جديد</h3>
+
+          <label class="formLabel" for="branchName">اسم الفرع</label>
+          <input type="text" id="branchName" placeholder="مثال: فرع المعادي">
+
+          <label class="formLabel" for="branchLink">رابط الموقع من Google Maps</label>
+          <div class="formInline">
+            <input type="text" id="branchLink" placeholder="الصق الرابط هنا">
+            <button type="button" id="branchExtractBtn" class="formInlineBtn">استخراج الإحداثيات</button>
+          </div>
+          <div id="branchExtractFeedback" class="formHint"></div>
+
+          <div class="formRow2">
+            <div>
+              <label class="formLabel" for="branchLat">خط العرض (Latitude)</label>
+              <input type="text" inputmode="decimal" id="branchLat">
+            </div>
+            <div>
+              <label class="formLabel" for="branchLng">خط الطول (Longitude)</label>
+              <input type="text" inputmode="decimal" id="branchLng">
+            </div>
+          </div>
+
+          <label class="formLabel" for="branchRadius">نطاق الفرع بالمتر (Radius)</label>
+          <input type="text" inputmode="numeric" id="branchRadius" value="100">
+
+          <div class="mapWrap">
+            <div id="branchMapBox" class="mapBox">
+              <div id="branchMapEl" style="width:100%;height:100%"></div>
+              <div class="mapSkeleton">📍 أدخل الإحداثيات لعرض الخريطة</div>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <button type="button" id="branchSaveBtn" class="action">حفظ الفرع</button>
+            <button type="button" id="branchCancelBtn" class="secondary">إلغاء</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
 // =========================
@@ -349,7 +466,7 @@ const UI_TEXT={
 };
 function V(){return UI_TEXT[S.locationMode==="geofence"?"geofence":"freeRoam"]}
 
-const S={busy:false,action:null,name:"الموظف",isLeader:false,locationMode:"freeRoam",coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
+const S={busy:false,action:null,name:"الموظف",isLeader:false,geofenceModuleAvailable:false,locationMode:"freeRoam",coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
 
 // =========================
 // EDITABLE HELP CENTER CONTENT
@@ -610,7 +727,7 @@ function showRegistration(){stopClock();screen("registration");document.getEleme
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
 function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent="تفعيل البوت مطلوب";if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
-async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.geofenceModuleAvailable=!!r.geofenceModuleAvailable;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
@@ -618,14 +735,291 @@ document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHo
 if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}
 else if(initTelegram())refresh();
 
-// ---- admin-only management placeholder (employees + branches) ----
-// Backend/UI for this is intentionally not built yet - this button is
-// just placed and gated behind S.isLeader for now, per the request to
-// "place it" ahead of building the actual management flow.
-document.getElementById("adminManageFab").onclick=()=>{
-  const msg="لوحة إدارة الموظفين والفروع قيد التطوير، ستتوفر قريباً.";
-  if(tg&&typeof tg.showAlert==="function")tg.showAlert(msg);else alert(msg);
-};
+// ---- admin management panel (employees + branches) ----
+// Gated behind S.isLeader client-side purely for UI convenience -
+// every action this panel calls (adminEmployeesList/Save,
+// adminBranchesList/Save, adminExtractCoords) re-checks Telegram
+// group-admin status server-side via requireMiniAppLeader_()
+// (04_Attendance.gs), so hiding the button here is not the actual
+// security boundary.
+const AdminS={employees:[],original:{},dirty:{},branches:[],branchList:[],editingBranchId:null,loadedBranches:false};
+let empRowEls={};
+
+function openAdminPanel(){
+  document.getElementById("adminBranchTabBtn").classList.toggle("hidden",!S.geofenceModuleAvailable);
+  setAdminTab("employees");
+  document.querySelector(".app").scrollTop=0;
+  document.getElementById("adminOverlay").classList.remove("hidden");
+  loadAdminEmployees();
+}
+function closeAdminPanel(){
+  if(Object.values(AdminS.dirty).some(Boolean)){
+    if(!confirm("لديك تغييرات غير محفوظة في صفحة الموظفين. هل تريد الإغلاق بدون حفظ؟"))return;
+  }
+  document.getElementById("adminOverlay").classList.add("hidden");
+}
+function setAdminTab(tab){
+  document.getElementById("adminEmpTabBtn").classList.toggle("active",tab==="employees");
+  document.getElementById("adminBranchTabBtn").classList.toggle("active",tab==="branches");
+  document.getElementById("adminEmployeesPanel").classList.toggle("hidden",tab!=="employees");
+  document.getElementById("adminBranchesPanel").classList.toggle("hidden",tab!=="branches");
+  if(tab==="branches"&&!AdminS.loadedBranches)loadAdminBranches();
+}
+
+// ---- employees tab ----
+async function loadAdminEmployees(){
+  const list=document.getElementById("adminEmpList");
+  list.textContent="جارٍ التحميل...";
+  try{
+    const r=await api("adminEmployeesList");
+    if(!r.success){list.textContent=r.error||"تعذر التحميل.";return}
+    AdminS.employees=r.employees||[];
+    AdminS.branches=r.branches||[];
+    AdminS.original={};
+    AdminS.dirty={};
+    AdminS.employees.forEach(e=>{AdminS.original[e.chatId]={name:e.name,jobTitle:e.jobTitle,branchId:e.branchId}});
+    renderAdminEmployees();
+    updateAdminSaveBar();
+  }catch(e){list.textContent="تعذر تحميل قائمة الموظفين."}
+}
+function branchSelectOptions(select,selectedId){
+  select.innerHTML="";
+  const none=document.createElement("option");
+  none.value="";none.textContent="متجول (بدون فرع)";
+  select.appendChild(none);
+  AdminS.branches.forEach(b=>{
+    const opt=document.createElement("option");
+    opt.value=b.id;opt.textContent=b.name;
+    select.appendChild(opt);
+  });
+  select.value=selectedId||"";
+}
+function renderAdminEmployees(){
+  const list=document.getElementById("adminEmpList");
+  list.innerHTML="";
+  empRowEls={};
+  if(!AdminS.employees.length){
+    const m=document.createElement("div");m.className="message";m.textContent="لا يوجد موظفون مسجلون بعد.";
+    list.appendChild(m);return;
+  }
+  AdminS.employees.forEach(emp=>{
+    const row=document.createElement("div");row.className="empRow";
+
+    const top=document.createElement("div");top.className="empRowTop";
+    const codeEl=document.createElement("div");codeEl.className="empCode";codeEl.textContent=emp.code||"—";
+    const userEl=document.createElement("div");userEl.className="empUsername";userEl.textContent=emp.username?"@"+emp.username:"—";
+    const statusDot=document.createElement("div");statusDot.className="empStatusDot"+(emp.status==="Active"?" on":"");statusDot.title=emp.status==="Active"?"مفعّل":"غير مفعّل";
+    const dirtyDot=document.createElement("div");dirtyDot.className="dirtyDot hidden";dirtyDot.title="يوجد تغييرات غير محفوظة";
+    const resetBtn=document.createElement("button");resetBtn.type="button";resetBtn.className="resetIconBtn hidden";resetBtn.textContent="↺";resetBtn.title="تراجع عن التغييرات";
+    top.append(codeEl,userEl,statusDot,dirtyDot,resetBtn);
+
+    const fields=document.createElement("div");fields.className="empRowFields";
+    const nameInput=document.createElement("input");nameInput.type="text";nameInput.placeholder="الاسم";nameInput.value=emp.name||"";
+    const jobTitleInput=document.createElement("input");jobTitleInput.type="text";jobTitleInput.setAttribute("list","jobTitleSuggestions");jobTitleInput.placeholder="المسمى الوظيفي";jobTitleInput.value=emp.jobTitle||"";
+    fields.append(nameInput,jobTitleInput);
+
+    let branchSelect=null;
+    if(S.geofenceModuleAvailable){
+      branchSelect=document.createElement("select");
+      branchSelectOptions(branchSelect,emp.branchId);
+      fields.appendChild(branchSelect);
+    }
+
+    row.append(top,fields);
+    list.appendChild(row);
+
+    function checkDirty(){
+      const orig=AdminS.original[emp.chatId];
+      const isDirty=nameInput.value.trim()!==orig.name||jobTitleInput.value.trim()!==orig.jobTitle||(branchSelect?branchSelect.value:"")!==orig.branchId;
+      AdminS.dirty[emp.chatId]=isDirty;
+      dirtyDot.classList.toggle("hidden",!isDirty);
+      resetBtn.classList.toggle("hidden",!isDirty);
+      updateAdminSaveBar();
+    }
+    nameInput.oninput=checkDirty;
+    jobTitleInput.oninput=checkDirty;
+    if(branchSelect)branchSelect.onchange=checkDirty;
+    resetBtn.onclick=()=>{
+      const orig=AdminS.original[emp.chatId];
+      nameInput.value=orig.name;jobTitleInput.value=orig.jobTitle;
+      if(branchSelect)branchSelect.value=orig.branchId;
+      checkDirty();
+    };
+
+    empRowEls[emp.chatId]={nameInput,jobTitleInput,branchSelect};
+  });
+}
+function updateAdminSaveBar(){
+  const count=Object.values(AdminS.dirty).filter(Boolean).length;
+  const btn=document.getElementById("adminEmpSaveBtn");
+  btn.disabled=count===0;
+  btn.textContent=count>0?("حفظ التغييرات ("+count+")"):"لا توجد تغييرات";
+}
+async function saveAdminEmployees(){
+  const changedIds=Object.keys(AdminS.dirty).filter(id=>AdminS.dirty[id]);
+  if(!changedIds.length)return;
+  const btn=document.getElementById("adminEmpSaveBtn");
+  btn.disabled=true;btn.textContent="جارٍ الحفظ...";
+  const changes=changedIds.map(id=>{
+    const els=empRowEls[id];
+    return{chatId:id,name:els.nameInput.value.trim(),jobTitle:els.jobTitleInput.value.trim(),branchId:els.branchSelect?els.branchSelect.value:""};
+  });
+  try{
+    const r=await api("adminEmployeesSave",{changes:JSON.stringify(changes)});
+    if(!r.success){alert(r.error||"تعذر حفظ التغييرات.");return}
+    (r.saved||[]).forEach(id=>{
+      AdminS.dirty[id]=false;
+      const orig=AdminS.original[id];const els=empRowEls[id];
+      if(els&&orig){
+        orig.name=els.nameInput.value.trim();
+        orig.jobTitle=els.jobTitleInput.value.trim();
+        orig.branchId=els.branchSelect?els.branchSelect.value:"";
+      }
+    });
+    renderAdminEmployees();
+    if(r.failed&&r.failed.length){
+      const lines=r.failed.map(f=>{
+        const emp=AdminS.employees.find(e=>e.chatId===f.chatId);
+        return(emp?emp.name:f.chatId)+": "+f.error;
+      }).join("\n");
+      alert("تم حفظ باقي التغييرات، وتعذر حفظ التالي:\n"+lines);
+    }
+  }catch(e){
+    alert("تعذر الاتصال بالخادم أثناء الحفظ.");
+  }finally{
+    updateAdminSaveBar();
+  }
+}
+
+// ---- branches tab ----
+let branchMap=null,branchMarker=null;
+function ensureBranchMap(lat,lng){
+  if(typeof L==="undefined")return;
+  if(!branchMap){
+    branchMap=L.map("branchMapEl",{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:true,tap:true}).setView([lat,lng],16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(branchMap);
+    branchMarker=L.marker([lat,lng]).addTo(branchMap);
+  }else{
+    branchMap.setView([lat,lng],16);
+    branchMarker.setLatLng([lat,lng]);
+  }
+  document.getElementById("branchMapBox").classList.add("hasMap");
+  requestAnimationFrame(()=>branchMap&&branchMap.invalidateSize());
+}
+async function loadAdminBranches(){
+  const list=document.getElementById("adminBranchList");
+  list.textContent="جارٍ التحميل...";
+  try{
+    const r=await api("adminBranchesList");
+    if(!r.success){list.textContent=r.error||"تعذر التحميل.";return}
+    AdminS.branchList=r.branches||[];
+    AdminS.loadedBranches=true;
+    renderAdminBranchList();
+  }catch(e){list.textContent="تعذر تحميل قائمة الفروع."}
+}
+function renderAdminBranchList(){
+  const list=document.getElementById("adminBranchList");
+  list.innerHTML="";
+  if(!AdminS.branchList.length){
+    const m=document.createElement("div");m.className="message";m.textContent="لا توجد فروع مضافة بعد.";
+    list.appendChild(m);return;
+  }
+  AdminS.branchList.forEach(b=>{
+    const row=document.createElement("div");row.className="branchRow";
+
+    const text=document.createElement("div");text.className="rowText";
+    const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent=b.name;
+    const metaEl=document.createElement("div");metaEl.className="rowLabel";metaEl.textContent="نطاق "+b.radiusMeters+" م  ·  "+b.lat.toFixed(5)+", "+b.lng.toFixed(5);
+    text.append(nameEl,metaEl);
+
+    const icon=document.createElement("div");icon.className="rowIcon";icon.textContent="✏️";
+
+    row.append(text,icon);
+    row.onclick=()=>loadBranchIntoForm(b);
+    list.appendChild(row);
+  });
+}
+function loadBranchIntoForm(b){
+  AdminS.editingBranchId=b.id;
+  document.getElementById("branchFormTitle").textContent="تعديل الفرع";
+  document.getElementById("branchName").value=b.name;
+  document.getElementById("branchLink").value="";
+  document.getElementById("branchLat").value=b.lat;
+  document.getElementById("branchLng").value=b.lng;
+  document.getElementById("branchRadius").value=b.radiusMeters;
+  document.getElementById("branchExtractFeedback").textContent="";
+  ensureBranchMap(b.lat,b.lng);
+  document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
+}
+function resetBranchForm(){
+  AdminS.editingBranchId=null;
+  document.getElementById("branchFormTitle").textContent="إضافة فرع جديد";
+  document.getElementById("branchName").value="";
+  document.getElementById("branchLink").value="";
+  document.getElementById("branchLat").value="";
+  document.getElementById("branchLng").value="";
+  document.getElementById("branchRadius").value="100";
+  document.getElementById("branchExtractFeedback").textContent="";
+  document.getElementById("branchMapBox").classList.remove("hasMap");
+}
+async function extractBranchCoords(){
+  const link=document.getElementById("branchLink").value.trim();
+  const fb=document.getElementById("branchExtractFeedback");
+  if(!link){fb.textContent="الصق رابط الموقع من Google Maps أولاً.";return}
+  const btn=document.getElementById("branchExtractBtn");
+  btn.disabled=true;const prevText=btn.textContent;btn.textContent="جارٍ الاستخراج...";
+  fb.textContent="";
+  try{
+    const r=await api("adminExtractCoords",{url:link});
+    if(!r.success){fb.textContent="❌ "+(r.error||"تعذر الاستخراج.");return}
+    document.getElementById("branchLat").value=r.lat;
+    document.getElementById("branchLng").value=r.lng;
+    ensureBranchMap(r.lat,r.lng);
+    fb.textContent="✅ تم استخراج الإحداثيات بنجاح.";
+  }catch(e){
+    fb.textContent="❌ تعذر الاتصال بالخادم.";
+  }finally{
+    btn.disabled=false;btn.textContent=prevText;
+  }
+}
+function previewBranchLatLng(){
+  const lat=parseFloat(document.getElementById("branchLat").value);
+  const lng=parseFloat(document.getElementById("branchLng").value);
+  if(isFinite(lat)&&isFinite(lng)&&lat>=-90&&lat<=90&&lng>=-180&&lng<=180)ensureBranchMap(lat,lng);
+}
+async function saveAdminBranch(){
+  const name=document.getElementById("branchName").value.trim();
+  const lat=document.getElementById("branchLat").value.trim();
+  const lng=document.getElementById("branchLng").value.trim();
+  const radius=document.getElementById("branchRadius").value.trim();
+  if(!name){alert("اسم الفرع مطلوب.");return}
+  if(!lat||!lng){alert("الإحداثيات مطلوبة - استخرجها من الرابط أو أدخلها يدوياً.");return}
+  if(!radius){alert("نطاق الفرع بالمتر مطلوب.");return}
+  const btn=document.getElementById("branchSaveBtn");
+  btn.disabled=true;const prevText=btn.textContent;btn.textContent="جارٍ الحفظ...";
+  try{
+    const r=await api("adminBranchesSave",{branchId:AdminS.editingBranchId||"",name:name,lat:lat,lng:lng,radiusMeters:radius});
+    if(!r.success){alert(r.error||"تعذر حفظ الفرع.");return}
+    resetBranchForm();
+    await loadAdminBranches();
+  }catch(e){
+    alert("تعذر الاتصال بالخادم أثناء حفظ الفرع.");
+  }finally{
+    btn.disabled=false;btn.textContent=prevText;
+  }
+}
+
+document.getElementById("adminManageFab").onclick=openAdminPanel;
+document.getElementById("adminCloseBtn").onclick=closeAdminPanel;
+document.getElementById("adminOverlay").addEventListener("click",function(e){if(e.target===this)closeAdminPanel()});
+document.getElementById("adminEmpTabBtn").onclick=()=>setAdminTab("employees");
+document.getElementById("adminBranchTabBtn").onclick=()=>setAdminTab("branches");
+document.getElementById("adminEmpSaveBtn").onclick=saveAdminEmployees;
+document.getElementById("branchExtractBtn").onclick=extractBranchCoords;
+document.getElementById("branchLat").addEventListener("change",previewBranchLatLng);
+document.getElementById("branchLng").addEventListener("change",previewBranchLatLng);
+document.getElementById("branchSaveBtn").onclick=saveAdminBranch;
+document.getElementById("branchCancelBtn").onclick=resetBranchForm;
 
 // ---- help center ----
 function renderHelpList(){
