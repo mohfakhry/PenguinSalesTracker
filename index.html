@@ -35,6 +35,7 @@ h2{margin:0;font-size:clamp(21px,6.5vw,27px);font-weight:850}
 
 .mapWrap{padding-bottom:14px}
 .mapBox{position:relative;width:100%;height:150px;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--muted) 10%,transparent)}
+#branchMapBox{height:230px}
 .mapSkeleton{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 12px}
 .mapBox.hasMap .mapSkeleton{display:none}
 .leaflet-container{background:transparent;font-family:inherit}
@@ -126,6 +127,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .row{padding:8px 0}
   .mapWrap{padding-bottom:8px}
   .mapBox{height:96px}
+  #branchMapBox{height:170px}
   button{min-height:46px;margin-top:8px;padding:10px 16px;font-size:15px}
   .action{min-height:52px}
   .back{min-height:34px;margin-top:4px}
@@ -146,6 +148,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .icon{width:44px;height:44px;font-size:20px;margin-bottom:8px}
   .screen{padding:14px 16px}
   .mapBox{height:78px}
+  #branchMapBox{height:120px}
   h2{font-size:17px}
   .message{font-size:13px}
 }
@@ -166,13 +169,14 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .adminList{padding:2px 0}
 
 .empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
-.empRowTop{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.empCode{font-size:11px;font-weight:800;color:var(--muted);background:color-mix(in srgb,var(--muted) 12%,transparent);padding:3px 8px;border-radius:8px;flex:none}
+.empRowSummary{display:flex;align-items:center;gap:10px;cursor:pointer}
 .empStatusDot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
 .empStatusDot.on{background:var(--success)}
 .dirtyDot{width:9px;height:9px;border-radius:50%;background:var(--warning);flex:none}
 .resetIconBtn{width:auto;min-height:0;margin:0;padding:5px 9px;border-radius:9px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:13px;flex:none}
-.empRowFields{display:flex;flex-direction:column;gap:8px}
+.empRowDetails{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.empRowDetails.hidden{display:none}
+.empRowDetailsFoot{display:flex;justify-content:flex-end}
 
 .adminSaveBar{position:sticky;bottom:0;background:var(--surface);padding:10px 0 2px;margin-top:4px}
 .adminSaveBar button{margin-top:0}
@@ -188,14 +192,11 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .rowIconBtn{width:auto;min-height:0;margin:0;padding:7px 10px;border-radius:10px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:14px;border:0}
 .rowIconBtn:active{transform:scale(.92)}
 
-.branchAddBtn{display:flex;align-items:center;justify-content:center;gap:8px;background:color-mix(in srgb,var(--button) 10%,transparent);color:var(--button);border:1px dashed color-mix(in srgb,var(--button) 40%,transparent);min-height:48px;margin:0 0 10px;font-size:14.5px}
+.branchAddBtn{width:auto;align-self:flex-start;padding:0 22px;min-height:48px;margin:0 0 10px}
 
 .formCard{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px}
 .formTitle{margin:0 0 4px;font-size:15px;font-weight:850}
 .formLabel{display:block;font-size:12px;color:var(--muted);margin:11px 0 5px;font-weight:750}
-.formInline{display:flex;gap:8px;align-items:stretch}
-.formInline input{flex:1}
-.formInlineBtn{width:auto;min-height:0;margin:0;padding:0 14px;border-radius:11px;font-size:12.5px;white-space:nowrap;background:var(--button);color:var(--buttonText);border:0}
 .formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
 .formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .formInlineLabel{display:flex;align-items:center;gap:10px;margin-top:2px}
@@ -203,7 +204,6 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formInlineLabel input{flex:1}
 input[readonly]{opacity:.75;cursor:default}
 
-.listRetryBtn{width:auto;min-height:0;margin:10px auto 0;padding:9px 16px;border-radius:11px;font-size:12.5px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);display:flex}
 
 @media (max-height:700px){
   .empRow{margin:6px 0;padding:9px 12px}
@@ -352,10 +352,7 @@ input[readonly]{opacity:.75;cursor:default}
             <input type="text" id="branchName" placeholder="مثال: فرع المعادي">
           </div>
 
-          <div class="formInline" style="margin-top:11px">
-            <input type="text" id="branchLink" placeholder="الصق رابط الموقع هنا">
-            <button type="button" id="branchExtractBtn" class="formInlineBtn">استخراج الإحداثيات</button>
-          </div>
+          <input type="text" id="branchLink" placeholder="الصق رابط الموقع هنا" style="margin-top:11px">
           <div id="branchExtractFeedback" class="formHint"></div>
 
           <div class="formRow2">
@@ -765,7 +762,7 @@ function renderListError(container,message,retryFn){
   container.innerHTML="";
   const p=document.createElement("div");p.className="message";p.textContent=message||"تعذر التحميل.";
   container.appendChild(p);
-  const btn=document.createElement("button");btn.type="button";btn.className="listRetryBtn";btn.textContent="🔄 إعادة المحاولة";
+  const btn=document.createElement("button");btn.type="button";btn.textContent="🔄 إعادة المحاولة";
   btn.onclick=retryFn;
   container.appendChild(btn);
 }
@@ -855,20 +852,28 @@ function renderAdminEmployees(){
   AdminS.employees.forEach(emp=>{
     const row=document.createElement("div");row.className="empRow";
 
-    // Compact header: code + status/dirty dots + undo only - no
-    // username here, since it's only ever set by the employee's own
-    // Telegram identity and isn't editable from this panel anyway (see
-    // adminSaveEmployees_'s comment in 03_Employees.gs).
-    const top=document.createElement("div");top.className="empRowTop";
-    const codeEl=document.createElement("div");codeEl.className="empCode";codeEl.textContent=emp.code||"—";
+    // Collapsed summary: name, then username + code on one meta line,
+    // a status dot, an undo dot (shows even collapsed, so an unsaved
+    // row is never hidden from view), and the ✏️ toggle. Username is
+    // shown here only - never an editable field, since it's only ever
+    // set by the employee's own Telegram identity (see
+    // adminSaveEmployees_'s comment in 03_Employees.gs). Name is
+    // likewise display-only now - not part of what this panel edits.
+    const summary=document.createElement("div");summary.className="empRowSummary";
+    const text=document.createElement("div");text.className="rowText";
+    const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent=emp.name||"—";
+    const metaEl=document.createElement("div");metaEl.className="rowLabel";metaEl.textContent=(emp.username?"@"+emp.username:"—")+"  ·  "+(emp.code||"—");
+    text.append(nameEl,metaEl);
     const statusDot=document.createElement("div");statusDot.className="empStatusDot"+(emp.status==="Active"?" on":"");statusDot.title=emp.status==="Active"?"مفعّل":"غير مفعّل";
     const dirtyDot=document.createElement("div");dirtyDot.className="dirtyDot hidden";dirtyDot.title="يوجد تغييرات غير محفوظة";
-    const resetBtn=document.createElement("button");resetBtn.type="button";resetBtn.className="resetIconBtn hidden";resetBtn.textContent="↺";resetBtn.title="تراجع عن التغييرات";
-    top.append(codeEl,statusDot,dirtyDot,resetBtn);
+    const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="rowIconBtn";editBtn.textContent="✏️";editBtn.title="تعديل";
+    summary.append(text,statusDot,dirtyDot,editBtn);
 
-    const fields=document.createElement("div");fields.className="empRowFields";
-    const nameInput=document.createElement("input");nameInput.type="text";nameInput.placeholder="الاسم";nameInput.value=emp.name||"";
-    fields.appendChild(nameInput);
+    // Expanded details: hidden until the edit toggle is tapped. Only
+    // job title + branch are editable here - the name field was
+    // removed, so the save payload always carries emp.name unchanged
+    // (see empRowEls below and saveAdminEmployees).
+    const details=document.createElement("div");details.className="empRowDetails hidden";
 
     const initialIsBranch=S.geofenceModuleAvailable&&!!emp.branchId;
     const jobWrap=document.createElement("div");jobWrap.className="jobTitleGroup";
@@ -879,18 +884,27 @@ function renderAdminEmployees(){
     const fieldOpt=makeRadio(radioName,"field",JOB_TITLE_FIELD,!initialIsBranch);
     radios.append(branchOpt.wrap,fieldOpt.wrap);
     jobWrap.append(jobLabel,radios);
-    fields.appendChild(jobWrap);
+    details.appendChild(jobWrap);
 
     let branchSelect=null;
     if(S.geofenceModuleAvailable){
       branchSelect=document.createElement("select");
       branchSelectOptions(branchSelect,emp.branchId);
       branchSelect.classList.toggle("hidden",!initialIsBranch);
-      fields.appendChild(branchSelect);
+      details.appendChild(branchSelect);
     }
 
-    row.append(top,fields);
+    const foot=document.createElement("div");foot.className="empRowDetailsFoot";
+    const resetBtn=document.createElement("button");resetBtn.type="button";resetBtn.className="resetIconBtn hidden";resetBtn.textContent="↺ تراجع";resetBtn.title="تراجع عن التغييرات";
+    foot.appendChild(resetBtn);
+    details.appendChild(foot);
+
+    row.append(summary,details);
     list.appendChild(row);
+
+    function toggleDetails(){details.classList.toggle("hidden")}
+    summary.onclick=toggleDetails;
+    editBtn.onclick=(e)=>{e.stopPropagation();toggleDetails()};
 
     function currentJobTitle(){return branchOpt.input.checked?JOB_TITLE_BRANCH:JOB_TITLE_FIELD}
     function currentBranchId(){return(branchOpt.input.checked&&branchSelect)?branchSelect.value:""}
@@ -898,19 +912,17 @@ function renderAdminEmployees(){
 
     function checkDirty(){
       const orig=AdminS.original[emp.chatId];
-      const isDirty=nameInput.value.trim()!==orig.name||currentJobTitle()!==orig.jobTitle||currentBranchId()!==orig.branchId;
+      const isDirty=currentJobTitle()!==orig.jobTitle||currentBranchId()!==orig.branchId;
       AdminS.dirty[emp.chatId]=isDirty;
       dirtyDot.classList.toggle("hidden",!isDirty);
       resetBtn.classList.toggle("hidden",!isDirty);
       updateAdminSaveBar();
     }
-    nameInput.oninput=checkDirty;
     branchOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     fieldOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     if(branchSelect)branchSelect.onchange=checkDirty;
     resetBtn.onclick=()=>{
       const orig=AdminS.original[emp.chatId];
-      nameInput.value=orig.name;
       const wasBranch=orig.jobTitle===JOB_TITLE_BRANCH;
       branchOpt.input.checked=wasBranch;fieldOpt.input.checked=!wasBranch;
       if(branchSelect)branchSelect.value=orig.branchId;
@@ -918,7 +930,7 @@ function renderAdminEmployees(){
       checkDirty();
     };
 
-    empRowEls[emp.chatId]={nameInput,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId};
+    empRowEls[emp.chatId]={name:emp.name,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId};
   });
 }
 function updateAdminSaveBar(){
@@ -934,7 +946,7 @@ async function saveAdminEmployees(){
   btn.disabled=true;btn.textContent="جارٍ الحفظ...";
   const changes=changedIds.map(id=>{
     const els=empRowEls[id];
-    return{chatId:id,name:els.nameInput.value.trim(),jobTitle:els.currentJobTitle(),branchId:els.currentBranchId()};
+    return{chatId:id,name:els.name,jobTitle:els.currentJobTitle(),branchId:els.currentBranchId()};
   });
   try{
     const r=await api("adminEmployeesSave",{changes:JSON.stringify(changes)});
@@ -943,7 +955,6 @@ async function saveAdminEmployees(){
       AdminS.dirty[id]=false;
       const orig=AdminS.original[id];const els=empRowEls[id];
       if(els&&orig){
-        orig.name=els.nameInput.value.trim();
         orig.jobTitle=els.currentJobTitle();
         orig.branchId=els.currentBranchId();
       }
@@ -1018,6 +1029,24 @@ function renderAdminBranchList(){
 }
 function showBranchForm(){document.getElementById("branchFormCard").classList.remove("hidden")}
 function hideBranchForm(){document.getElementById("branchFormCard").classList.add("hidden")}
+
+// Tracks whether branchLat/branchLng currently hold a coordinate pair
+// the admin can actually save - either a persisted branch's own
+// coordinates (loadBranchIntoForm) or a just-extracted result
+// (runBranchExtract). Not tied to the fields simply being non-empty,
+// since a failed extraction can leave stale text in the feedback area
+// but must never leave Save enabled. updateBranchSaveEnabled() is the
+// single place that reads this alongside the name field and the
+// in-flight flag.
+let branchCoordsValid=false;
+let branchExtractInFlight=false;
+let branchExtractTimer=null;
+
+function updateBranchSaveEnabled(){
+  const name=document.getElementById("branchName").value.trim();
+  document.getElementById("branchSaveBtn").disabled=!(name&&branchCoordsValid&&!branchExtractInFlight);
+}
+
 function loadBranchIntoForm(b){
   AdminS.editingBranchId=b.id;
   // Radius has no field of its own anymore (see saveAdminBranch) - a
@@ -1031,6 +1060,9 @@ function loadBranchIntoForm(b){
   document.getElementById("branchLat").value=b.lat;
   document.getElementById("branchLng").value=b.lng;
   document.getElementById("branchExtractFeedback").textContent="";
+  branchCoordsValid=true; // the branch's own persisted coordinates, not a fresh extraction
+  branchExtractInFlight=false;
+  updateBranchSaveEnabled();
   showBranchForm();
   ensureBranchMap(b.lat,b.lng);
   document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
@@ -1045,33 +1077,62 @@ function resetBranchForm(){
   document.getElementById("branchLng").value="";
   document.getElementById("branchExtractFeedback").textContent="";
   document.getElementById("branchMapBox").classList.remove("hasMap");
+  branchCoordsValid=false;
+  branchExtractInFlight=false;
+  clearTimeout(branchExtractTimer);
+  updateBranchSaveEnabled();
 }
-async function extractBranchCoords(){
-  const link=document.getElementById("branchLink").value.trim();
+
+// Runs automatically in the background as soon as a link shows up in
+// the field - on paste, on typing, on autofill - rather than needing a
+// separate "extract" tap. Debounced 600ms after the last change so a
+// link pasted or typed a character at a time doesn't fire a request
+// per keystroke. The link-value check after the await guards against a
+// stale response landing after the admin has already changed/cleared
+// the field again.
+function scheduleBranchExtract(){
+  clearTimeout(branchExtractTimer);
+  document.getElementById("branchLat").value="";
+  document.getElementById("branchLng").value="";
+  document.getElementById("branchMapBox").classList.remove("hasMap");
+  branchCoordsValid=false;
   const fb=document.getElementById("branchExtractFeedback");
-  if(!link){fb.textContent="الصق رابط الموقع من Google Maps أولاً.";return}
-  const btn=document.getElementById("branchExtractBtn");
-  btn.disabled=true;const prevText=btn.textContent;btn.textContent="جارٍ الاستخراج...";
+  const link=document.getElementById("branchLink").value.trim();
+  if(!link){fb.textContent="";branchExtractInFlight=false;updateBranchSaveEnabled();return}
   fb.textContent="";
+  updateBranchSaveEnabled();
+  branchExtractTimer=setTimeout(()=>runBranchExtract(link),600);
+}
+async function runBranchExtract(link){
+  const fb=document.getElementById("branchExtractFeedback");
+  branchExtractInFlight=true;
+  fb.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
+  updateBranchSaveEnabled();
   try{
     const r=await api("adminExtractCoords",{url:link});
-    if(!r.success){fb.textContent="❌ "+(r.error||"تعذر الاستخراج.");return}
+    if(document.getElementById("branchLink").value.trim()!==link)return; // link changed since this call started
+    if(!r.success){fb.textContent="❌ "+(r.error||"تعذر تحديد الموقع من هذا الرابط.");branchCoordsValid=false;return}
     document.getElementById("branchLat").value=r.lat;
     document.getElementById("branchLng").value=r.lng;
     ensureBranchMap(r.lat,r.lng);
-    fb.textContent="✅ تم استخراج الإحداثيات بنجاح.";
+    fb.textContent="✅ تم تحديد الموقع بنجاح.";
+    branchCoordsValid=true;
   }catch(e){
-    fb.textContent="❌ تعذر الاتصال بالخادم.";
+    if(document.getElementById("branchLink").value.trim()!==link)return;
+    fb.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع.";
+    branchCoordsValid=false;
   }finally{
-    btn.disabled=false;btn.textContent=prevText;
+    if(document.getElementById("branchLink").value.trim()===link){
+      branchExtractInFlight=false;
+      updateBranchSaveEnabled();
+    }
   }
 }
 async function saveAdminBranch(){
   const name=document.getElementById("branchName").value.trim();
   const lat=document.getElementById("branchLat").value.trim();
   const lng=document.getElementById("branchLng").value.trim();
-  if(!name){alert("اسم الفرع مطلوب.");return}
-  if(!lat||!lng){alert("الإحداثيات مطلوبة - استخرجها من رابط الموقع أولاً.");return}
+  if(!name||!lat||!lng)return; // Save stays disabled in this case - defensive only
   const radius=AdminS.editingBranchRadius||100;
   const btn=document.getElementById("branchSaveBtn");
   btn.disabled=true;const prevText=btn.textContent;btn.textContent="جارٍ الحفظ...";
@@ -1084,7 +1145,8 @@ async function saveAdminBranch(){
   }catch(e){
     alert("تعذر الاتصال بالخادم أثناء حفظ الفرع.");
   }finally{
-    btn.disabled=false;btn.textContent=prevText;
+    btn.textContent=prevText;
+    updateBranchSaveEnabled();
   }
 }
 // Confirms locally first (using the employee list already loaded when
@@ -1122,7 +1184,8 @@ document.getElementById("branchAddBtn").onclick=()=>{
   showBranchForm();
   document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
 };
-document.getElementById("branchExtractBtn").onclick=extractBranchCoords;
+document.getElementById("branchName").addEventListener("input",updateBranchSaveEnabled);
+document.getElementById("branchLink").addEventListener("input",scheduleBranchExtract);
 document.getElementById("branchSaveBtn").onclick=saveAdminBranch;
 document.getElementById("branchCancelBtn").onclick=()=>{resetBranchForm();hideBranchForm()};
 
