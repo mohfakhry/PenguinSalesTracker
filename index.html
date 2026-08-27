@@ -165,6 +165,16 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 input[type=text],select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:14px}
 input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--button) 40%,transparent);outline-offset:1px}
 
+/* Custom select arrow: the native one is removed (appearance:none) and
+   replaced with a bold CSS chevron drawn on .selectWrap::after, so it
+   can use var(--text) (native arrows can't follow the app's theme) and
+   be made thicker/more visible on request. Sits on the left (the "end"
+   side in this RTL layout) with room between it and the select's own
+   left padding so it never crowds the box's edge. */
+.selectWrap{position:relative}
+.selectWrap select{appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-left:38px}
+.selectWrap::after{content:"";position:absolute;left:17px;top:50%;width:9px;height:9px;border-right:3px solid var(--text);border-bottom:3px solid var(--text);transform:translateY(-65%) rotate(45deg);pointer-events:none}
+
 .adminPanel{display:flex;flex-direction:column}
 .adminList{padding:2px 0}
 
@@ -173,10 +183,8 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .empStatusDot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
 .empStatusDot.on{background:var(--success)}
 .dirtyDot{width:9px;height:9px;border-radius:50%;background:var(--warning);flex:none}
-.resetIconBtn{width:auto;min-height:0;margin:0;padding:5px 9px;border-radius:9px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:13px;flex:none}
 .empRowDetails{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
 .empRowDetails.hidden{display:none}
-.empRowDetailsFoot{display:flex;justify-content:flex-end}
 
 .adminSaveBar{position:sticky;bottom:0;background:var(--surface);padding:10px 0 2px;margin-top:4px}
 .adminSaveBar button{margin-top:0}
@@ -199,6 +207,7 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formLabel{display:block;font-size:12px;color:var(--muted);margin:11px 0 5px;font-weight:750}
 .formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
 .formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.branchMapWrap{margin-top:14px}
 .formInlineLabel{display:flex;align-items:center;gap:10px;margin-top:2px}
 .formInlineLabel .formLabel{margin:0;white-space:nowrap;flex:none}
 .formInlineLabel input{flex:1}
@@ -209,6 +218,15 @@ input[readonly]{opacity:.75;cursor:default}
   .empRow{margin:6px 0;padding:9px 12px}
   .formCard{padding:12px}
 }
+
+/* ---- unsaved-changes confirmation modal ---- */
+.unsavedOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.unsavedOverlay.hidden{display:none}
+.unsavedBox{background:var(--surface);border-radius:16px;padding:18px 18px 14px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.unsavedMsg{color:var(--text);font-size:14px;line-height:1.7;text-align:right;margin-bottom:4px}
+.unsavedActions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.unsavedActions button{margin-top:0}
+#unsavedDiscardBtn{background:var(--danger)}
 </style>
 </head>
 
@@ -349,7 +367,7 @@ input[readonly]{opacity:.75;cursor:default}
 
           <div class="formInlineLabel">
             <label class="formLabel" for="branchName">اسم الفرع</label>
-            <input type="text" id="branchName" placeholder="مثال: فرع المعادي">
+            <input type="text" id="branchName" placeholder="أدخل اسم الفرع">
           </div>
 
           <input type="text" id="branchLink" placeholder="الصق رابط الموقع هنا" style="margin-top:11px">
@@ -366,7 +384,7 @@ input[readonly]{opacity:.75;cursor:default}
             </div>
           </div>
 
-          <div class="mapWrap">
+          <div class="mapWrap branchMapWrap">
             <div id="branchMapBox" class="mapBox">
               <div id="branchMapEl" style="width:100%;height:100%"></div>
               <div class="mapSkeleton">📍 استخرج الإحداثيات لعرض الخريطة</div>
@@ -380,6 +398,16 @@ input[readonly]{opacity:.75;cursor:default}
         </div>
         <div id="adminBranchList" class="adminList"></div>
       </section>
+    </div>
+  </div>
+</div>
+
+<div id="unsavedOverlay" class="unsavedOverlay hidden">
+  <div class="unsavedBox">
+    <div id="unsavedMsg" class="unsavedMsg"></div>
+    <div class="unsavedActions">
+      <button type="button" id="unsavedContinueBtn" class="secondary">متابعة التعديل</button>
+      <button type="button" id="unsavedDiscardBtn">تجاهل التغييرات</button>
     </div>
   </div>
 </div>
@@ -774,11 +802,72 @@ function openAdminPanel(){
   document.getElementById("adminOverlay").classList.remove("hidden");
   loadAdminEmployees();
 }
-function closeAdminPanel(){
+
+// ---- unsaved-changes confirmation (shared by the employees list and
+// the branch form - see call sites below) ----
+// A styled stand-in for confirm(), since the ask is specifically a
+// "discard changes / keep editing" choice rather than a generic
+// OK/Cancel box. Only one can be open at a time, which matches how
+// it's used here: it always blocks on the previous choice before
+// anything else can trigger the modal again.
+let unsavedConfirmResolve=null;
+function confirmUnsaved(message){
+  return new Promise(resolve=>{
+    unsavedConfirmResolve=resolve;
+    document.getElementById("unsavedMsg").textContent=message;
+    document.getElementById("unsavedOverlay").classList.remove("hidden");
+  });
+}
+document.getElementById("unsavedContinueBtn").onclick=()=>{
+  document.getElementById("unsavedOverlay").classList.add("hidden");
+  const resolve=unsavedConfirmResolve;unsavedConfirmResolve=null;
+  if(resolve)resolve(false);
+};
+document.getElementById("unsavedDiscardBtn").onclick=()=>{
+  document.getElementById("unsavedOverlay").classList.add("hidden");
+  const resolve=unsavedConfirmResolve;unsavedConfirmResolve=null;
+  if(resolve)resolve(true);
+};
+
+// Whether the branch form currently holds edits that haven't been
+// saved - compared against AdminS.branchOriginal, which
+// loadBranchIntoForm/resetBranchForm both keep up to date. Mirrors how
+// AdminS.dirty tracks the employees list, just for the one form
+// instead of a set of rows.
+function branchFormDirty(){
+  if(document.getElementById("branchFormCard").classList.contains("hidden"))return false;
+  const orig=AdminS.branchOriginal||{name:"",lat:"",lng:"",link:""};
+  return document.getElementById("branchName").value!==orig.name||
+    document.getElementById("branchLat").value!==orig.lat||
+    document.getElementById("branchLng").value!==orig.lng||
+    document.getElementById("branchLink").value!==orig.link;
+}
+
+async function closeAdminPanel(){
   if(Object.values(AdminS.dirty).some(Boolean)){
-    if(!confirm("لديك تغييرات غير محفوظة في صفحة الموظفين. هل تريد الإغلاق بدون حفظ؟"))return;
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في صفحة الموظفين. هل تريد الإغلاق بدون حفظ؟"))return;
+  }
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع. هل تريد الإغلاق بدون حفظ؟"))return;
   }
   document.getElementById("adminOverlay").classList.add("hidden");
+}
+// Wraps setAdminTab for the tab buttons themselves: switching away from
+// a tab that has unsaved edits needs the same confirmation as closing
+// the whole panel. setAdminTab stays a plain, confirmation-free render
+// step since it's also called on initial open and after loading
+// branches, where nothing needs to be discarded.
+async function switchAdminTab(tab){
+  const curTab=document.getElementById("adminEmpTabBtn").classList.contains("active")?"employees":"branches";
+  if(curTab===tab){setAdminTab(tab);return}
+  if(curTab==="employees"&&Object.values(AdminS.dirty).some(Boolean)){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في صفحة الموظفين."))return;
+  }
+  if(curTab==="branches"&&branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع."))return;
+    resetBranchForm();hideBranchForm();
+  }
+  setAdminTab(tab);
 }
 function setAdminTab(tab){
   document.getElementById("adminEmpTabBtn").classList.toggle("active",tab==="employees");
@@ -822,17 +911,22 @@ async function loadAdminEmployees(){
     updateAdminSaveBar();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الموظفين.",loadAdminEmployees)}
 }
+// The dropdown only ever lists actual branches now - "متجول (بدون فرع)"
+// is a job-title choice (see fieldOpt in the radio group above), not a
+// branch, so it has no business appearing as a selectable option here.
+// A "موظف فرع" always needs a real branch, so if the employee doesn't
+// have one yet (was just switched from field rep, or somehow has an
+// unrecognized id) this defaults the dropdown to the first branch
+// rather than leaving it on a value that matches nothing.
 function branchSelectOptions(select,selectedId){
   select.innerHTML="";
-  const none=document.createElement("option");
-  none.value="";none.textContent="متجول (بدون فرع)";
-  select.appendChild(none);
   AdminS.branches.forEach(b=>{
     const opt=document.createElement("option");
     opt.value=b.id;opt.textContent=b.name;
     select.appendChild(opt);
   });
-  select.value=selectedId||"";
+  const hasSelected=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
+  select.value=hasSelected?selectedId:(AdminS.branches[0]?AdminS.branches[0].id:"");
 }
 function makeRadio(name,value,label,checked){
   const wrap=document.createElement("label");wrap.className="radioOption";
@@ -887,17 +981,15 @@ function renderAdminEmployees(){
     details.appendChild(jobWrap);
 
     let branchSelect=null;
+    let branchSelectWrap=null;
     if(S.geofenceModuleAvailable){
+      branchSelectWrap=document.createElement("div");branchSelectWrap.className="selectWrap";
       branchSelect=document.createElement("select");
       branchSelectOptions(branchSelect,emp.branchId);
-      branchSelect.classList.toggle("hidden",!initialIsBranch);
-      details.appendChild(branchSelect);
+      branchSelectWrap.appendChild(branchSelect);
+      branchSelectWrap.classList.toggle("hidden",!initialIsBranch);
+      details.appendChild(branchSelectWrap);
     }
-
-    const foot=document.createElement("div");foot.className="empRowDetailsFoot";
-    const resetBtn=document.createElement("button");resetBtn.type="button";resetBtn.className="resetIconBtn hidden";resetBtn.textContent="↺ تراجع";resetBtn.title="تراجع عن التغييرات";
-    foot.appendChild(resetBtn);
-    details.appendChild(foot);
 
     row.append(summary,details);
     list.appendChild(row);
@@ -908,27 +1000,18 @@ function renderAdminEmployees(){
 
     function currentJobTitle(){return branchOpt.input.checked?JOB_TITLE_BRANCH:JOB_TITLE_FIELD}
     function currentBranchId(){return(branchOpt.input.checked&&branchSelect)?branchSelect.value:""}
-    function updateBranchVisibility(){if(branchSelect)branchSelect.classList.toggle("hidden",!branchOpt.input.checked)}
+    function updateBranchVisibility(){if(branchSelectWrap)branchSelectWrap.classList.toggle("hidden",!branchOpt.input.checked)}
 
     function checkDirty(){
       const orig=AdminS.original[emp.chatId];
       const isDirty=currentJobTitle()!==orig.jobTitle||currentBranchId()!==orig.branchId;
       AdminS.dirty[emp.chatId]=isDirty;
       dirtyDot.classList.toggle("hidden",!isDirty);
-      resetBtn.classList.toggle("hidden",!isDirty);
       updateAdminSaveBar();
     }
     branchOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     fieldOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     if(branchSelect)branchSelect.onchange=checkDirty;
-    resetBtn.onclick=()=>{
-      const orig=AdminS.original[emp.chatId];
-      const wasBranch=orig.jobTitle===JOB_TITLE_BRANCH;
-      branchOpt.input.checked=wasBranch;fieldOpt.input.checked=!wasBranch;
-      if(branchSelect)branchSelect.value=orig.branchId;
-      updateBranchVisibility();
-      checkDirty();
-    };
 
     empRowEls[emp.chatId]={name:emp.name,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId};
   });
@@ -1021,11 +1104,21 @@ function renderAdminBranchList(){
     actions.append(editBtn,deleteBtn);
 
     row.append(text,actions);
-    editBtn.onclick=(e)=>{e.stopPropagation();loadBranchIntoForm(b)};
+    editBtn.onclick=(e)=>{e.stopPropagation();requestLoadBranchIntoForm(b)};
     deleteBtn.onclick=(e)=>{e.stopPropagation();deleteAdminBranch(b)};
-    row.onclick=()=>loadBranchIntoForm(b);
+    row.onclick=()=>requestLoadBranchIntoForm(b);
     list.appendChild(row);
   });
+}
+// Guards loadBranchIntoForm itself: switching the form over to a
+// different branch discards whatever's currently sitting in it, so if
+// the admin was mid-edit on another branch (or a new, not-yet-saved
+// one) that needs the same confirmation as closing the panel would.
+async function requestLoadBranchIntoForm(b){
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في الفرع الحالي."))return;
+  }
+  loadBranchIntoForm(b);
 }
 function showBranchForm(){document.getElementById("branchFormCard").classList.remove("hidden")}
 function hideBranchForm(){document.getElementById("branchFormCard").classList.add("hidden")}
@@ -1066,6 +1159,10 @@ function loadBranchIntoForm(b){
   showBranchForm();
   ensureBranchMap(b.lat,b.lng);
   document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
+  // Snapshot for branchFormDirty() - taken from the fields themselves
+  // (not b directly) so the comparison is on the same string values the
+  // inputs will hold.
+  AdminS.branchOriginal={name:document.getElementById("branchName").value,lat:document.getElementById("branchLat").value,lng:document.getElementById("branchLng").value,link:document.getElementById("branchLink").value};
 }
 function resetBranchForm(){
   AdminS.editingBranchId=null;
@@ -1080,6 +1177,7 @@ function resetBranchForm(){
   branchCoordsValid=false;
   branchExtractInFlight=false;
   clearTimeout(branchExtractTimer);
+  AdminS.branchOriginal={name:"",lat:"",lng:"",link:""};
   updateBranchSaveEnabled();
 }
 
@@ -1176,10 +1274,13 @@ async function deleteAdminBranch(b){
 document.getElementById("adminManageFab").onclick=openAdminPanel;
 document.getElementById("adminCloseBtn").onclick=closeAdminPanel;
 document.getElementById("adminOverlay").addEventListener("click",function(e){if(e.target===this)closeAdminPanel()});
-document.getElementById("adminEmpTabBtn").onclick=()=>setAdminTab("employees");
-document.getElementById("adminBranchTabBtn").onclick=()=>setAdminTab("branches");
+document.getElementById("adminEmpTabBtn").onclick=()=>switchAdminTab("employees");
+document.getElementById("adminBranchTabBtn").onclick=()=>switchAdminTab("branches");
 document.getElementById("adminEmpSaveBtn").onclick=saveAdminEmployees;
-document.getElementById("branchAddBtn").onclick=()=>{
+document.getElementById("branchAddBtn").onclick=async ()=>{
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في الفرع الحالي."))return;
+  }
   resetBranchForm();
   showBranchForm();
   document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
@@ -1187,7 +1288,23 @@ document.getElementById("branchAddBtn").onclick=()=>{
 document.getElementById("branchName").addEventListener("input",updateBranchSaveEnabled);
 document.getElementById("branchLink").addEventListener("input",scheduleBranchExtract);
 document.getElementById("branchSaveBtn").onclick=saveAdminBranch;
-document.getElementById("branchCancelBtn").onclick=()=>{resetBranchForm();hideBranchForm()};
+document.getElementById("branchCancelBtn").onclick=async ()=>{
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في هذا الفرع."))return;
+  }
+  resetBranchForm();hideBranchForm();
+};
+// Leaving the admin panel open but navigating the browser away (reload,
+// back, closing the tab) is the same "unsaved changes" situation - the
+// native beforeunload prompt is the only one browsers allow here, so it
+// can't be swapped for the styled modal, but it only fires when there's
+// actually something to lose.
+window.addEventListener("beforeunload",function(e){
+  if(document.getElementById("adminOverlay").classList.contains("hidden"))return;
+  if(Object.values(AdminS.dirty).some(Boolean)||branchFormDirty()){
+    e.preventDefault();e.returnValue="";
+  }
+});
 
 // ---- help center ----
 function renderHelpList(){
