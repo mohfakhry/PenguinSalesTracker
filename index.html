@@ -219,6 +219,16 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formInlineLabel input{flex:1}
 input[readonly]{opacity:.75;cursor:default}
 
+/* Clear (✕) button shown inside a text input once it has a value -
+   e.g. the "paste location link" field. Uses inset-inline-end so it
+   sits on the correct side automatically under the page's RTL
+   direction instead of a hardcoded left/right. */
+.inputClearWrap{position:relative}
+.inputClearWrap input[type=text]{padding-inline-end:38px}
+.inputClearBtn{position:absolute;top:50%;inset-inline-end:6px;transform:translateY(-50%);width:26px;height:26px;min-height:0;margin:0;padding:0;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+.inputClearBtn:active{transform:translateY(-50%) scale(.9)}
+.inputClearBtn.hidden{display:none}
+
 
 @media (max-height:700px){
   .empRow{margin:6px 0;padding:9px 12px}
@@ -232,6 +242,17 @@ input[readonly]{opacity:.75;cursor:default}
 .unsavedMsg{color:var(--text);font-size:14px;line-height:1.7;text-align:right;margin-bottom:4px}
 .unsavedActions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .unsavedActions button{margin-top:0}
+
+/* Strong/danger confirmation modal - a visually distinct variant of
+   the unsaved-changes box above, used for actions that need to stop
+   the admin and get real attention (e.g. deleting a branch that
+   still has employees assigned to it) rather than a dismissible
+   native confirm() that's easy to click through on autopilot. */
+.dangerBox{border:2px solid var(--danger);box-shadow:0 12px 40px rgba(217,83,79,.28)}
+.dangerHead{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.dangerHeadIcon{font-size:23px;flex:none;line-height:1}
+.dangerTitle{font-weight:850;color:var(--danger);font-size:16px;line-height:1.4}
+.dangerNames{margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--danger) 10%,transparent);font-size:13px;line-height:1.9;text-align:right;max-height:150px;overflow-y:auto}
 </style>
 </head>
 
@@ -379,6 +400,18 @@ input[readonly]{opacity:.75;cursor:default}
     <div class="unsavedActions">
       <button type="button" id="unsavedContinueBtn">متابعة التعديل</button>
       <button type="button" id="unsavedDiscardBtn" class="cancelText">تجاهل التغييرات</button>
+    </div>
+  </div>
+</div>
+
+<div id="dangerOverlay" class="unsavedOverlay hidden">
+  <div class="unsavedBox dangerBox">
+    <div class="dangerHead"><span class="dangerHeadIcon">🚨</span><span id="dangerTitle" class="dangerTitle"></span></div>
+    <div id="dangerMsg" class="unsavedMsg"></div>
+    <div id="dangerNames" class="dangerNames hidden"></div>
+    <div class="unsavedActions">
+      <button type="button" id="dangerConfirmBtn" class="danger"></button>
+      <button type="button" id="dangerCancelBtn" class="cancelText">إلغاء</button>
     </div>
   </div>
 </div>
@@ -776,6 +809,8 @@ function renderListLoading(container){
   container.innerHTML="";
   const p=document.createElement("div");p.className="message";p.textContent="🕐 جارٍ التحميل...";
   container.appendChild(p);
+  const bar=document.createElement("div");bar.className="progress show";
+  container.appendChild(bar);
 }
 function renderListError(container,message,retryFn){
   container.innerHTML="";
@@ -818,6 +853,43 @@ document.getElementById("unsavedDiscardBtn").onclick=()=>{
   document.getElementById("unsavedOverlay").classList.add("hidden");
   const resolve=unsavedConfirmResolve;unsavedConfirmResolve=null;
   if(resolve)resolve(true);
+};
+
+// ---- strong/danger confirmation (e.g. deleting a branch that still
+// has employees assigned to it) - same show/resolve pattern as
+// confirmUnsaved above, but its own overlay+resolve pair so a danger
+// confirm and an unsaved-changes confirm can never collide, and its
+// own visual treatment (red border, 🚨 header, optional list of
+// affected names) so it reads as materially more serious than a
+// routine "are you sure?". namesList is optional - pass an array of
+// strings to show them, or omit/empty for a plain confirmation.
+let dangerConfirmResolve=null;
+function confirmDanger(title,message,confirmLabel,namesList){
+  return new Promise(resolve=>{
+    dangerConfirmResolve=resolve;
+    document.getElementById("dangerTitle").textContent=title;
+    document.getElementById("dangerMsg").textContent=message;
+    document.getElementById("dangerConfirmBtn").textContent=confirmLabel;
+    const namesEl=document.getElementById("dangerNames");
+    if(namesList&&namesList.length){
+      namesEl.innerHTML="";
+      namesList.forEach(n=>{const d=document.createElement("div");d.textContent="• "+n;namesEl.appendChild(d)});
+      namesEl.classList.remove("hidden");
+    }else{
+      namesEl.classList.add("hidden");
+    }
+    document.getElementById("dangerOverlay").classList.remove("hidden");
+  });
+}
+document.getElementById("dangerConfirmBtn").onclick=()=>{
+  document.getElementById("dangerOverlay").classList.add("hidden");
+  const resolve=dangerConfirmResolve;dangerConfirmResolve=null;
+  if(resolve)resolve(true);
+};
+document.getElementById("dangerCancelBtn").onclick=()=>{
+  document.getElementById("dangerOverlay").classList.add("hidden");
+  const resolve=dangerConfirmResolve;dangerConfirmResolve=null;
+  if(resolve)resolve(false);
 };
 
 // Whether the currently-open branch row (if any) holds edits that
@@ -1170,10 +1242,17 @@ function buildBranchRow(b,isNew){
   nameWrap.append(nameLabel,nameInput);
   details.appendChild(nameWrap);
 
-  const linkInput=document.createElement("input");linkInput.type="text";linkInput.placeholder="الصق رابط الموقع هنا";linkInput.style.marginTop="11px";
-  details.appendChild(linkInput);
+  const linkWrap=document.createElement("div");linkWrap.className="inputClearWrap";linkWrap.style.marginTop="11px";
+  const linkInput=document.createElement("input");linkInput.type="text";linkInput.placeholder="الصق رابط الموقع هنا";
+  const linkClearBtn=document.createElement("button");linkClearBtn.type="button";linkClearBtn.className="inputClearBtn hidden";linkClearBtn.textContent="✕";linkClearBtn.title="مسح";linkClearBtn.setAttribute("aria-label","مسح رابط الموقع");
+  linkWrap.append(linkInput,linkClearBtn);
+  details.appendChild(linkWrap);
   const feedback=document.createElement("div");feedback.className="formHint";
   details.appendChild(feedback);
+  // Same blue loading bar used on the home/confirm screens (.progress),
+  // shown only while a coordinate extraction is actually in flight.
+  const extractProgress=document.createElement("div");extractProgress.className="progress";
+  details.appendChild(extractProgress);
 
   const row2=document.createElement("div");row2.className="formRow2";
   const latWrap=document.createElement("div");
@@ -1245,16 +1324,21 @@ function buildBranchRow(b,isNew){
   function isDirty(){
     return nameInput.value!==original.name||latInput.value!==original.lat||lngInput.value!==original.lng||linkInput.value!==original.link;
   }
+  function updateLinkClearBtn(){
+    linkClearBtn.classList.toggle("hidden",!linkInput.value);
+  }
   function fillFromBranch(){
     nameInput.value=b?b.name:"";
     linkInput.value="";
     latInput.value=b?String(b.lat):"";
     lngInput.value=b?String(b.lng):"";
     feedback.textContent="";
+    extractProgress.classList.remove("show");
     mapBox.classList.remove("hasMap");
     coordsValid=!!b;
     extractInFlight=false;
     clearTimeout(extractTimer);
+    updateLinkClearBtn();
     original={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value};
     updateSaveEnabled();
   }
@@ -1283,6 +1367,8 @@ function buildBranchRow(b,isNew){
     latInput.value="";lngInput.value="";
     mapBox.classList.remove("hasMap");
     coordsValid=false;
+    extractProgress.classList.remove("show");
+    updateLinkClearBtn();
     const link=linkInput.value.trim();
     if(!link){feedback.textContent="";extractInFlight=false;updateSaveEnabled();return}
     feedback.textContent="";
@@ -1292,20 +1378,30 @@ function buildBranchRow(b,isNew){
   async function runExtract(link){
     extractInFlight=true;
     feedback.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
+    extractProgress.classList.add("show");
     updateSaveEnabled();
     try{
       const r=await api("adminExtractCoords",{url:link});
       if(linkInput.value.trim()!==link)return; // link changed since this call started
-      if(!r.success){feedback.textContent="❌ "+(r.error||"تعذر تحديد الموقع من هذا الرابط.");coordsValid=false;return}
+      if(!r.success){
+        // Give a concrete, actionable reason instead of a bare "failed" -
+        // the backend's own r.error is used when it has one; otherwise
+        // fall back to the most common cause (not a real Google Maps
+        // location link) with a next step, not just a dead end.
+        feedback.textContent="❌ "+(r.error||"تعذر العثور على إحداثيات في هذا الرابط. تأكد من أنه رابط موقع من خرائط جوجل (زر «مشاركة» ثم «نسخ الرابط»)، وأنه رابط كامل وليس نصاً مختصراً، ثم الصقه هنا مجدداً.");
+        coordsValid=false;
+        return;
+      }
       latInput.value=r.lat;lngInput.value=r.lng;
       ensureMap(r.lat,r.lng);
       feedback.textContent="✅ تم تحديد الموقع بنجاح.";
       coordsValid=true;
     }catch(e){
       if(linkInput.value.trim()!==link)return;
-      feedback.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع.";
+      feedback.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع. تحقق من اتصال الإنترنت، ثم الصق الرابط مرة أخرى للمحاولة من جديد.";
       coordsValid=false;
     }finally{
+      extractProgress.classList.remove("show");
       if(linkInput.value.trim()===link){
         extractInFlight=false;
         updateSaveEnabled();
@@ -1333,6 +1429,11 @@ function buildBranchRow(b,isNew){
 
   nameInput.addEventListener("input",updateSaveEnabled);
   linkInput.addEventListener("input",scheduleExtract);
+  linkClearBtn.onclick=()=>{
+    linkInput.value="";
+    linkInput.focus();
+    scheduleExtract(); // clears lat/lng/map/coordsValid and hides the clear button itself
+  };
   saveBtn.onclick=save;
   cancelBtn.onclick=async()=>{
     if(isDirty()){
@@ -1379,13 +1480,31 @@ async function startNewBranchRow(){
 // backend do the real deletion + reassignment + admin notice
 // (adminDeleteBranch_, 10_Branches.gs) - see that function's comment
 // for why there's no second server round trip just to confirm.
+//
+// IMPORTANT: affected employees are NOT moved to free-roam - their
+// BranchID is set to "none", which blocks check-in/check-out entirely
+// until an admin manually reassigns them (see BRANCH_DELETED_NOTICE,
+// 00_Config.gs). The confirmation here has to say that plainly, not
+// soften it into "moved to roaming", or the admin deletes the branch
+// thinking it's a harmless reassignment.
 async function deleteAdminBranch(b,rowCtx){
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
-  let msg='هل أنت متأكد من حذف فرع "'+b.name+'"؟';
+  let ok;
   if(affected.length){
-    msg+='\n\nتنبيه ⚠️ يوجد '+affected.length+' موظف/موظفين مرتبطين بهذا الفرع حالياً. سيتم نقلهم تلقائياً إلى "بدون فرع" (متجول)، وسيصل تنبيه بذلك لجميع المشرفين.';
+    ok=await confirmDanger(
+      "تحذير خطير - يتطلب تدخلاً فورياً من المشرفين",
+      'حذف الفرع "'+b.name+'" سيعطّل فوراً '+affected.length+' موظف/موظفين مرتبطين به حالياً. لن يتم نقلهم إلى وضع "متجول" - بل لن يتمكنوا من تسجيل حضور أو انصراف على الإطلاق حتى تتم مراجعتهم يدوياً وتعيين فرع جديد لهم. سيصل تنبيه عاجل لجميع المشرفين، لكن يجب معالجة الأمر فور الحذف.',
+      "نعم، أعلم النتيجة واحذف الفرع",
+      affected.map(e=>e.name)
+    );
+  }else{
+    ok=await confirmDanger(
+      "تأكيد حذف الفرع",
+      'هل أنت متأكد من حذف فرع "'+b.name+'"؟ لا يمكن التراجع عن هذا الإجراء.',
+      "حذف الفرع"
+    );
   }
-  if(!confirm(msg))return;
+  if(!ok)return;
   try{
     const r=await api("adminBranchesDelete",{branchId:b.id});
     if(!r.success){alert(r.error||"تعذر حذف الفرع.");return}
