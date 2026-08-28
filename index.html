@@ -29,6 +29,16 @@ h2{margin:0;font-size:clamp(21px,6.5vw,27px);font-weight:850}
 .row:last-child{border-bottom:0}
 .rowText{flex:1;min-width:0}
 .rowLabel{font-size:12px;color:var(--muted);margin-bottom:2px}
+/* For a meta line whose content is inherently LTR (a Telegram
+   @username plus a Latin/digit employee code) sitting inside an RTL
+   page. Without this, the page's RTL base direction can reorder the
+   neutral characters ("@", "·") relative to the two Latin runs on
+   either side of them - e.g. the "@" drifting to the end of the line
+   instead of staying immediately before the username. Forcing
+   direction:ltr keeps "@username · CODE" in its actual reading order;
+   text-align:right keeps it flush with the rest of the right-aligned
+   card instead of jumping to the left edge. */
+.metaLtr{direction:ltr;text-align:right}
 .rowValue{font-size:14px;font-weight:800;line-height:1.4;overflow-wrap:anywhere}
 .rowIcon{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:color-mix(in srgb,var(--button) 12%,transparent)}
 .rowIcon.tintSuccess{background:color-mix(in srgb,var(--success) 14%,transparent)}
@@ -1033,8 +1043,25 @@ function renderAdminEmployees(){
     const summary=document.createElement("div");summary.className="empRowSummary";
     const text=document.createElement("div");text.className="rowText";
     const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent="👤 "+(emp.name||"—");
-    const metaEl=document.createElement("div");metaEl.className="rowLabel";metaEl.textContent=(emp.username?"@"+emp.username:"—")+"  ·  "+(emp.code||"—");
+    const metaEl=document.createElement("div");metaEl.className="rowLabel metaLtr";metaEl.textContent=(emp.username?"@"+emp.username:"—")+" · "+(emp.code||"—");
+    // Second meta line: job title, plus the assigned branch's name
+    // when the employee is a branch employee (same signal the backend
+    // uses - see normalizedJobTitle()'s comment below) - so the role
+    // and branch are visible at a glance without expanding the row.
+    // Only shown at all when the geofence drawer is active, same
+    // condition the branch dropdown itself is gated on.
+    let roleEl=null;
+    if(S.geofenceModuleAvailable){
+      const empIsBranch=normalizedJobTitle(emp)===JOB_TITLE_BRANCH;
+      let roleLine=empIsBranch?JOB_TITLE_BRANCH:JOB_TITLE_FIELD;
+      if(empIsBranch){
+        const br=AdminS.branches.find(x=>x.id===emp.branchId);
+        roleLine+=" · "+(br?br.name:(emp.branchId==="none"?"⚠️ بدون فرع (يتطلب تعيين)":"—"));
+      }
+      roleEl=document.createElement("div");roleEl.className="rowLabel";roleEl.textContent=roleLine;
+    }
     text.append(nameEl,metaEl);
+    if(roleEl)text.append(roleEl);
     const statusDot=document.createElement("div");statusDot.className="empStatusDot"+(emp.status==="Active"?" on":"");statusDot.title=emp.status==="Active"?"مفعّل":"غير مفعّل";
     const dirtyDot=document.createElement("div");dirtyDot.className="dirtyDot hidden";dirtyDot.title="يوجد تغييرات غير محفوظة";
     const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="rowIconBtn";editBtn.textContent="✏️";editBtn.title="تعديل";
