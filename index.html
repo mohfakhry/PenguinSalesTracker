@@ -68,11 +68,6 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .feedback{display:none;margin-top:14px;padding:13px;border-radius:15px;background:color-mix(in srgb,var(--danger) 12%,transparent);font-size:13px}
 .feedback.show{display:block}
 .steps{margin-top:16px;padding:14px 18px;border-radius:15px;background:color-mix(in srgb,var(--muted) 7%,transparent);color:var(--muted);text-align:right;line-height:2;font-size:13px}
-/* Same box, but styled to actually stand out - used for the
-   employees-panel note about the Telegram group being the only place
-   to add/remove staff, so it doesn't blend into the page like an
-   ordinary muted hint. */
-.steps.noteWarning{background:color-mix(in srgb,var(--warning) 16%,transparent);border:1px solid color-mix(in srgb,var(--warning) 40%,transparent);color:var(--text);font-weight:700}
 .footer{padding-top:16px;text-align:center;color:var(--muted);font-size:11px}
 
 .action-buttons{display:flex;flex-direction:column;gap:12px;margin-top:8px}
@@ -97,7 +92,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .help-overlay.hidden{display:none}
 .help-inner{position:relative;width:min(100%,440px);max-height:min(82vh,640px);max-height:min(82dvh,640px);background:var(--surface);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;padding:16px 16px 14px;overflow:hidden}
 .help-header{flex:none;display:flex;align-items:center;padding:2px 2px 14px 44px}
-.help-close{position:absolute;top:12px;left:12px;width:36px;height:36px;min-height:0;margin:0;flex:none;border-radius:50%;background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--text);font-size:26px;font-weight:800;line-height:1;padding:0}
+.help-close{position:absolute;top:12px;left:12px;width:36px;height:36px;min-height:0;margin:0;flex:none;border-radius:50%;background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--text);font-size:18px;line-height:1;padding:0}
 .help-title{font-size:clamp(19px,5vw,23px);font-weight:850}
 
 .tabs{flex:none;display:flex;gap:6px;margin-top:2px}
@@ -136,7 +131,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .row{padding:8px 0}
   .mapWrap{padding-bottom:8px}
   .mapBox{height:96px}
-  .branchMapWrap .mapBox{height:192px}
+  #branchMapBox{height:170px}
   button{min-height:46px;margin-top:8px;padding:10px 16px;font-size:15px}
   .action{min-height:52px}
   .back{min-height:34px;margin-top:4px}
@@ -148,7 +143,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .help-overlay{padding:10px}
   .help-inner{padding:12px 12px 10px;max-height:90vh;max-height:90dvh}
   .help-header{padding:2px 2px 10px 40px}
-  .help-close{width:32px;height:32px;top:8px;left:8px;font-size:22px}
+  .help-close{width:32px;height:32px;top:8px;left:8px;font-size:16px}
   .help-title{font-size:18px}
   .tab{padding:9px 8px;font-size:13px}
   .faqItem{padding:9px 0}
@@ -157,7 +152,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .icon{width:44px;height:44px;font-size:20px;margin-bottom:8px}
   .screen{padding:14px 16px}
   .mapBox{height:78px}
-  .branchMapWrap .mapBox{height:156px}
+  #branchMapBox{height:120px}
   h2{font-size:17px}
   .message{font-size:13px}
 }
@@ -203,12 +198,14 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .radioOption{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text);cursor:pointer}
 .radioOption input[type=radio]{width:auto;flex:none;margin:0;accent-color:var(--button)}
 
-.branchRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
+.branchRowWrap{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin:8px 0;text-align:right}
 .branchRowSummary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.branchRowSummary:active{transform:scale(.98)}
+.branchRowDetails{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.branchRowDetails.hidden{display:none}
 .branchRowActions{display:flex;gap:6px;flex:none}
 .rowIconBtn{width:auto;min-height:0;margin:0;padding:7px 10px;border-radius:10px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:14px;border:0}
 .rowIconBtn:active{transform:scale(.92)}
-.branchRowName{font-size:18px}
 
 .branchAddBtn{width:auto;align-self:flex-start;padding:0 22px;min-height:48px;margin:0 0 10px}
 
@@ -218,11 +215,6 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
 .formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .branchMapWrap{margin-top:14px}
-/* Branch page's own map preview, doubled from the base .mapBox size
-   on request - scoped here rather than raising .mapBox itself so the
-   check-in confirmation screen's map (which also uses .mapBox) is
-   untouched. */
-.branchMapWrap .mapBox{height:300px}
 .formInlineLabel{display:flex;align-items:center;gap:10px;margin-top:2px}
 .formInlineLabel .formLabel{margin:0;white-space:nowrap;flex:none}
 .formInlineLabel input{flex:1}
@@ -231,6 +223,7 @@ input[readonly]{opacity:.75;cursor:default}
 
 @media (max-height:700px){
   .empRow{margin:6px 0;padding:9px 12px}
+  .branchRowWrap{margin:6px 0;padding:9px 12px}
   .formCard{padding:12px}
 }
 
@@ -369,7 +362,7 @@ input[readonly]{opacity:.75;cursor:default}
     <div class="tabContent">
       <section id="adminEmployeesPanel" class="adminPanel">
         <div id="adminEmpList" class="adminList"></div>
-        <div class="steps noteWarning">تنبيه ⚠️ إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
+        <div class="steps">إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
         <div class="adminSaveBar">
           <button type="button" id="adminEmpSaveBtn" disabled>لا توجد تغييرات</button>
         </div>
@@ -790,14 +783,12 @@ function openAdminPanel(){
 // "discard changes / keep editing" choice rather than a generic
 // OK/Cancel box. Only one can be open at a time, which matches how
 // it's used here: it always blocks on the previous choice before
-// anything else can trigger the modal again. Every call site passes
-// just the specific warning text - the "تنبيه ⚠️" lead-in is added
-// here once so it's never missing from one spot and not another.
+// anything else can trigger the modal again.
 let unsavedConfirmResolve=null;
 function confirmUnsaved(message){
   return new Promise(resolve=>{
     unsavedConfirmResolve=resolve;
-    document.getElementById("unsavedMsg").textContent="تنبيه ⚠️  "+message;
+    document.getElementById("unsavedMsg").textContent=message;
     document.getElementById("unsavedOverlay").classList.remove("hidden");
   });
 }
@@ -812,12 +803,18 @@ document.getElementById("unsavedDiscardBtn").onclick=()=>{
   if(resolve)resolve(true);
 };
 
-// Whether the currently-expanded branch row (if any) holds edits that
-// haven't been saved. openBranchRow is maintained by each row's own
-// state object (see buildBranchRow, "---- branches tab ----" below) -
-// only one row can be open at a time, so this just asks that one.
+// Whether the branch form currently holds edits that haven't been
+// saved - compared against AdminS.branchOriginal, which
+// loadBranchIntoForm/resetBranchForm both keep up to date. Mirrors how
+// AdminS.dirty tracks the employees list, just for the one form
+// instead of a set of rows.
 function branchFormDirty(){
-  return !!(openBranchRow&&openBranchRow.isDirty());
+  if(document.getElementById("branchFormCard").classList.contains("hidden"))return false;
+  const orig=AdminS.branchOriginal||{name:"",lat:"",lng:"",link:""};
+  return document.getElementById("branchName").value!==orig.name||
+    document.getElementById("branchLat").value!==orig.lat||
+    document.getElementById("branchLng").value!==orig.lng||
+    document.getElementById("branchLink").value!==orig.link;
 }
 
 async function closeAdminPanel(){
@@ -842,7 +839,7 @@ async function switchAdminTab(tab){
   }
   if(curTab==="branches"&&branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع."))return;
-    openBranchRow.discardAndCollapse();
+    resetBranchForm();hideBranchForm();
   }
   setAdminTab(tab);
 }
@@ -858,19 +855,31 @@ function setAdminTab(tab){
 // Job title is now a fixed choice - "موظف فرع" (branch employee, needs
 // a branch picked) or "مندوب مبيعات ميداني" (field sales rep, free-roam)
 // - rather than free text, so it can drive the branch dropdown's
-// visibility directly. normalizedJobTitle() derives which of the two an
-// employee currently is from the one signal that's actually reliable
-// either way (BranchID set or not), rather than trusting whatever
-// legacy free-text string might already be sitting in the JOB_TITLE
-// cell (old suggestions like "كاشير"/"أمين مخزن" etc. predate this
-// scheme). AdminS.original is seeded with this same normalized value so
-// a row that hasn't been touched never shows as dirty just because its
-// stored text doesn't literally match one of the two canonical labels -
-// saving any change to that row will naturally clean the cell over to
-// one of the two going forward.
+// visibility directly. This is also the real backend routing signal
+// now (isEmployeeGeofenced_, 11_Location_Core.gs) - so
+// normalizedJobTitle() must agree with it: trust the employee's actual
+// stored JOB_TITLE first when it's already one of the two canonical
+// values (this is what the backend itself goes by), and only fall
+// back to inferring from BranchID for a row that hasn't been migrated
+// yet - blank, or legacy free text from before this scheme existed
+// (old suggestions like "كاشير"/"أمين مخزن"). Getting this backwards -
+// re-deriving from BranchID even when a real JOB_TITLE is already on
+// file - would make the admin panel disagree with what the backend
+// actually does (e.g. after a branch deletion sets BranchID to "none":
+// the backend keeps the employee geofenced because JOB_TITLE still
+// says "موظف فرع", but re-deriving here would still show that
+// correctly too only by coincidence, since "none" is non-empty - the
+// two need to be reading the same signal, not agreeing by accident).
+// AdminS.original is seeded with this same normalized value so a row
+// that hasn't been touched never shows as dirty just because its
+// stored text doesn't literally match one of the two canonical labels
+// - saving any change to that row will naturally clean the cell over
+// to one of the two going forward.
 const JOB_TITLE_BRANCH="موظف فرع";
 const JOB_TITLE_FIELD="مندوب مبيعات ميداني";
 function normalizedJobTitle(emp){
+  if(emp.jobTitle===JOB_TITLE_FIELD)return JOB_TITLE_FIELD;
+  if(emp.jobTitle===JOB_TITLE_BRANCH)return JOB_TITLE_BRANCH;
   return (S.geofenceModuleAvailable&&emp.branchId)?JOB_TITLE_BRANCH:JOB_TITLE_FIELD;
 }
 async function loadAdminEmployees(){
@@ -947,7 +956,12 @@ function renderAdminEmployees(){
     // (see empRowEls below and saveAdminEmployees).
     const details=document.createElement("div");details.className="empRowDetails hidden";
 
-    const initialIsBranch=S.geofenceModuleAvailable&&!!emp.branchId;
+    // Same signal the backend actually uses (isEmployeeGeofenced_,
+    // 11_Location_Core.gs) - trust the real stored job title first,
+    // only falling back to BranchID for a not-yet-migrated row. See
+    // normalizedJobTitle()'s comment above for why this can't just
+    // re-derive from BranchID directly.
+    const initialIsBranch=S.geofenceModuleAvailable&&normalizedJobTitle(emp)===JOB_TITLE_BRANCH;
     const jobWrap=document.createElement("div");jobWrap.className="jobTitleGroup";
     const jobLabel=document.createElement("div");jobLabel.className="formLabel";jobLabel.style.margin="0";jobLabel.textContent="المسمى الوظيفي";
     const radios=document.createElement("div");radios.className="jobTitleRadios";
@@ -1045,15 +1059,20 @@ async function saveAdminEmployees(){
 }
 
 // ---- branches tab ----
-// Each branch gets its own row with an inline expandable edit card
-// (name/link/lat-lng/map/save/cancel) instead of one shared form at
-// the top - the same one-card-per-item pattern the employees list
-// uses. Only one row's card can be open at a time (see buildBranchRow
-// -> open()): opening a different row while the current one is dirty
-// asks the same discard/keep-editing question closing the whole panel
-// does.
-let openBranchRow=null; // the currently-open row's state object, or null
-
+let branchMap=null,branchMarker=null;
+function ensureBranchMap(lat,lng){
+  if(typeof L==="undefined")return;
+  if(!branchMap){
+    branchMap=L.map("branchMapEl",{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:true,tap:true}).setView([lat,lng],16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(branchMap);
+    branchMarker=L.marker([lat,lng]).addTo(branchMap);
+  }else{
+    branchMap.setView([lat,lng],16);
+    branchMarker.setLatLng([lat,lng]);
+  }
+  document.getElementById("branchMapBox").classList.add("hasMap");
+  requestAnimationFrame(()=>branchMap&&branchMap.invalidateSize());
+}
 async function loadAdminBranches(){
   const list=document.getElementById("adminBranchList");
   renderListLoading(list);
@@ -1068,244 +1087,184 @@ async function loadAdminBranches(){
 function renderAdminBranchList(){
   const list=document.getElementById("adminBranchList");
   list.innerHTML="";
-  openBranchRow=null;
   if(!AdminS.branchList.length){
     const m=document.createElement("div");m.className="message";m.textContent="لا توجد فروع مضافة بعد.";
     list.appendChild(m);return;
   }
-  AdminS.branchList.forEach(b=>list.appendChild(buildBranchRow(b).row));
+  AdminS.branchList.forEach(b=>{
+    const row=document.createElement("div");row.className="branchRow";
+
+    const text=document.createElement("div");text.className="rowText";
+    const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent=b.name;
+    const metaEl=document.createElement("div");metaEl.className="rowLabel";metaEl.textContent="نطاق "+b.radiusMeters+" م  ·  "+b.lat.toFixed(5)+", "+b.lng.toFixed(5);
+    text.append(nameEl,metaEl);
+
+    const actions=document.createElement("div");actions.className="branchRowActions";
+    const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="rowIconBtn";editBtn.textContent="✏️";editBtn.title="تعديل";
+    const deleteBtn=document.createElement("button");deleteBtn.type="button";deleteBtn.className="rowIconBtn";deleteBtn.textContent="🗑️";deleteBtn.title="حذف";
+    actions.append(editBtn,deleteBtn);
+
+    row.append(text,actions);
+    editBtn.onclick=(e)=>{e.stopPropagation();requestLoadBranchIntoForm(b)};
+    deleteBtn.onclick=(e)=>{e.stopPropagation();deleteAdminBranch(b)};
+    row.onclick=()=>requestLoadBranchIntoForm(b);
+    list.appendChild(row);
+  });
+}
+// Guards loadBranchIntoForm itself: switching the form over to a
+// different branch discards whatever's currently sitting in it, so if
+// the admin was mid-edit on another branch (or a new, not-yet-saved
+// one) that needs the same confirmation as closing the panel would.
+async function requestLoadBranchIntoForm(b){
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في الفرع الحالي."))return;
+  }
+  loadBranchIntoForm(b);
+}
+function showBranchForm(){document.getElementById("branchFormCard").classList.remove("hidden")}
+function hideBranchForm(){document.getElementById("branchFormCard").classList.add("hidden")}
+
+// Tracks whether branchLat/branchLng currently hold a coordinate pair
+// the admin can actually save - either a persisted branch's own
+// coordinates (loadBranchIntoForm) or a just-extracted result
+// (runBranchExtract). Not tied to the fields simply being non-empty,
+// since a failed extraction can leave stale text in the feedback area
+// but must never leave Save enabled. updateBranchSaveEnabled() is the
+// single place that reads this alongside the name field and the
+// in-flight flag.
+let branchCoordsValid=false;
+let branchExtractInFlight=false;
+let branchExtractTimer=null;
+
+function updateBranchSaveEnabled(){
+  const name=document.getElementById("branchName").value.trim();
+  document.getElementById("branchSaveBtn").disabled=!(name&&branchCoordsValid&&!branchExtractInFlight);
 }
 
-// Builds one branch row: a tappable summary line plus its own
-// expandable details card. Pass a branch object to build an
-// editable-existing-branch row, or null/undefined to build a blank
-// "add new branch" row (see branchAddBtn's handler below). Returns
-// {row, open} - open() is exposed so the add-branch flow can expand
-// the freshly-built row immediately.
-function buildBranchRow(b){
-  const isNew=!b;
-  const row=document.createElement("div");row.className="branchRow";
+function loadBranchIntoForm(b){
+  AdminS.editingBranchId=b.id;
+  // Radius has no field of its own anymore (see saveAdminBranch) - a
+  // branch already on the sheet keeps whatever radius it has (possibly
+  // hand-tuned there directly) untouched by an unrelated name/location
+  // edit here; only a brand-new branch gets the 100m default.
+  AdminS.editingBranchRadius=b.radiusMeters||100;
+  document.getElementById("branchFormTitle").textContent="تعديل الفرع";
+  document.getElementById("branchName").value=b.name;
+  document.getElementById("branchLink").value="";
+  document.getElementById("branchLat").value=b.lat;
+  document.getElementById("branchLng").value=b.lng;
+  document.getElementById("branchExtractFeedback").textContent="";
+  branchCoordsValid=true; // the branch's own persisted coordinates, not a fresh extraction
+  branchExtractInFlight=false;
+  updateBranchSaveEnabled();
+  showBranchForm();
+  ensureBranchMap(b.lat,b.lng);
+  document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
+  // Snapshot for branchFormDirty() - taken from the fields themselves
+  // (not b directly) so the comparison is on the same string values the
+  // inputs will hold.
+  AdminS.branchOriginal={name:document.getElementById("branchName").value,lat:document.getElementById("branchLat").value,lng:document.getElementById("branchLng").value,link:document.getElementById("branchLink").value};
+}
+function resetBranchForm(){
+  AdminS.editingBranchId=null;
+  AdminS.editingBranchRadius=100;
+  document.getElementById("branchFormTitle").textContent="إضافة فرع جديد";
+  document.getElementById("branchName").value="";
+  document.getElementById("branchLink").value="";
+  document.getElementById("branchLat").value="";
+  document.getElementById("branchLng").value="";
+  document.getElementById("branchExtractFeedback").textContent="";
+  document.getElementById("branchMapBox").classList.remove("hasMap");
+  branchCoordsValid=false;
+  branchExtractInFlight=false;
+  clearTimeout(branchExtractTimer);
+  AdminS.branchOriginal={name:"",lat:"",lng:"",link:""};
+  updateBranchSaveEnabled();
+}
 
-  const summary=document.createElement("div");summary.className="branchRowSummary";
-  const text=document.createElement("div");text.className="rowText";
-  const nameEl=document.createElement("div");nameEl.className="rowValue branchRowName";nameEl.textContent=isNew?"فرع جديد":b.name;
-  text.append(nameEl);
-  const actions=document.createElement("div");actions.className="branchRowActions";
-  const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="rowIconBtn";editBtn.textContent="✏️";editBtn.title="تعديل";
-  if(!isNew){
-    const deleteBtn=document.createElement("button");deleteBtn.type="button";deleteBtn.className="rowIconBtn";deleteBtn.textContent="🗑️";deleteBtn.title="حذف";
-    deleteBtn.onclick=(e)=>{e.stopPropagation();deleteAdminBranch(b)};
-    actions.appendChild(deleteBtn);
-  }
-  actions.appendChild(editBtn);
-  summary.append(text,actions);
-
-  const details=document.createElement("div");details.className="empRowDetails hidden";
-
-  const nameWrap=document.createElement("div");nameWrap.className="formInlineLabel";
-  const nameLabel=document.createElement("label");nameLabel.className="formLabel";nameLabel.textContent="اسم الفرع";
-  const nameInput=document.createElement("input");nameInput.type="text";nameInput.placeholder="أدخل اسم الفرع";
-  nameWrap.append(nameLabel,nameInput);
-  details.appendChild(nameWrap);
-
-  const linkInput=document.createElement("input");linkInput.type="text";linkInput.placeholder="الصق رابط الموقع هنا";linkInput.style.marginTop="11px";
-  details.appendChild(linkInput);
-  const feedback=document.createElement("div");feedback.className="formHint";
-  details.appendChild(feedback);
-
-  const row2=document.createElement("div");row2.className="formRow2";
-  const latWrap=document.createElement("div");
-  const latLabel=document.createElement("label");latLabel.className="formLabel";latLabel.textContent="خط العرض (Latitude)";
-  const latInput=document.createElement("input");latInput.type="text";latInput.readOnly=true;
-  latWrap.append(latLabel,latInput);
-  const lngWrap=document.createElement("div");
-  const lngLabel=document.createElement("label");lngLabel.className="formLabel";lngLabel.textContent="خط الطول (Longitude)";
-  const lngInput=document.createElement("input");lngInput.type="text";lngInput.readOnly=true;
-  lngWrap.append(lngLabel,lngInput);
-  row2.append(latWrap,lngWrap);
-  details.appendChild(row2);
-
-  const mapWrap=document.createElement("div");mapWrap.className="mapWrap branchMapWrap";
-  const mapBox=document.createElement("div");mapBox.className="mapBox";
-  const mapEl=document.createElement("div");mapEl.style.width="100%";mapEl.style.height="100%";
-  const mapSkeleton=document.createElement("div");mapSkeleton.className="mapSkeleton";mapSkeleton.textContent="📍 استخرج الإحداثيات لعرض الخريطة";
-  mapBox.append(mapEl,mapSkeleton);
-  mapWrap.appendChild(mapBox);
-  details.appendChild(mapWrap);
-
-  const formActions=document.createElement("div");formActions.className="action-buttons";
-  const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="action";saveBtn.textContent="حفظ الفرع";
-  const cancelBtn=document.createElement("button");cancelBtn.type="button";cancelBtn.className="cancelText";cancelBtn.textContent="إلغاء";
-  formActions.append(saveBtn,cancelBtn);
-  details.appendChild(formActions);
-
-  row.append(summary,details);
-
-  // ---- this row's own state (mirrors what used to be the single
-  // shared branchMap/branchCoordsValid/AdminS.editingBranchId etc.) ----
-  let map=null,marker=null;
-  let coordsValid=false;
-  let extractInFlight=false;
-  let extractTimer=null;
-  const editingId=isNew?null:b.id;
-  const editingRadius=isNew?100:(b.radiusMeters||100);
-  let orig={name:"",lat:"",lng:"",link:""};
-
-  function ensureMap(lat,lng){
-    if(typeof L==="undefined")return;
-    if(!map){
-      map=L.map(mapEl,{zoomControl:true,dragging:true,scrollWheelZoom:false,doubleClickZoom:true,tap:true}).setView([lat,lng],16);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-      marker=L.marker([lat,lng]).addTo(map);
-    }else{
-      map.setView([lat,lng],16);
-      marker.setLatLng([lat,lng]);
-    }
-    mapBox.classList.add("hasMap");
-    requestAnimationFrame(()=>map&&map.invalidateSize());
-  }
-  function updateSaveEnabled(){
-    saveBtn.disabled=!(nameInput.value.trim()&&coordsValid&&!extractInFlight);
-  }
-  function isDirty(){
-    return nameInput.value!==orig.name||latInput.value!==orig.lat||lngInput.value!==orig.lng||linkInput.value!==orig.link;
-  }
-  // Reverts an existing branch's fields to their last-saved values and
-  // collapses; a brand-new row has no saved values to revert to, so it
-  // is removed from the list entirely instead.
-  function discardAndCollapse(){
-    if(isNew){row.remove();return}
-    nameInput.value=orig.name;latInput.value=orig.lat;lngInput.value=orig.lng;linkInput.value=orig.link;
-    feedback.textContent="";
-    coordsValid=!!(orig.lat&&orig.lng);
-    extractInFlight=false;clearTimeout(extractTimer);
-    updateSaveEnabled();
-    collapse();
-  }
-  function collapse(){
-    details.classList.add("hidden");
-    if(openBranchRow===state)openBranchRow=null;
-  }
-  // Expanding this row first has to deal with whatever other row is
-  // currently open (if any): confirm+discard it, same question closing
-  // the whole panel would ask. Returns false if the admin chose to keep
-  // editing the other row instead, so nothing here changed.
-  async function open(){
-    if(openBranchRow&&openBranchRow!==state){
-      if(openBranchRow.isDirty()){
-        if(!await confirmUnsaved("لديك تغييرات غير محفوظة في الفرع الحالي."))return false;
-      }
-      openBranchRow.discardAndCollapse();
-    }
-    details.classList.remove("hidden");
-    openBranchRow=state;
-    if(coordsValid&&latInput.value&&lngInput.value)ensureMap(parseFloat(latInput.value),parseFloat(lngInput.value));
-    document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
-    return true;
-  }
-  async function toggle(){
-    if(details.classList.contains("hidden"))await open();
-    else collapse();
-  }
-  nameInput.addEventListener("input",()=>{nameEl.textContent=nameInput.value.trim()||(isNew?"فرع جديد":b.name);updateSaveEnabled()});
-  linkInput.addEventListener("input",scheduleExtract);
-  saveBtn.onclick=doSave;
-  cancelBtn.onclick=async ()=>{
-    if(isDirty()){
-      if(!await confirmUnsaved(isNew?"سيتم تجاهل هذا الفرع الجديد غير المحفوظ.":"لديك تغييرات غير محفوظة في هذا الفرع."))return;
-    }
-    discardAndCollapse();
-  };
-  summary.onclick=toggle;
-  editBtn.onclick=(e)=>{e.stopPropagation();toggle()};
-
-  // Runs automatically as soon as a link shows up in the field - on
-  // paste, typing, or autofill - rather than needing a separate
-  // "extract" tap. Debounced 600ms so typing a link a character at a
-  // time doesn't fire a request per keystroke. The link-value check
-  // after each await guards against a stale response landing after the
-  // admin already changed/cleared the field again.
-  function scheduleExtract(){
-    clearTimeout(extractTimer);
-    latInput.value="";lngInput.value="";
-    mapBox.classList.remove("hasMap");
-    coordsValid=false;
-    const link=linkInput.value.trim();
-    if(!link){feedback.textContent="";extractInFlight=false;updateSaveEnabled();return}
-    feedback.textContent="";
-    updateSaveEnabled();
-    extractTimer=setTimeout(()=>runExtract(link),600);
-  }
-  async function runExtract(link){
-    extractInFlight=true;
-    feedback.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
-    updateSaveEnabled();
-    try{
-      const r=await api("adminExtractCoords",{url:link});
-      if(linkInput.value.trim()!==link)return;
-      if(!r.success){feedback.textContent="❌ "+(r.error||"تعذر تحديد الموقع من هذا الرابط.");coordsValid=false;return}
-      latInput.value=r.lat;lngInput.value=r.lng;
-      ensureMap(r.lat,r.lng);
-      feedback.textContent="✅ تم تحديد الموقع بنجاح.";
-      coordsValid=true;
-    }catch(e){
-      if(linkInput.value.trim()!==link)return;
-      feedback.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع.";
-      coordsValid=false;
-    }finally{
-      if(linkInput.value.trim()===link){extractInFlight=false;updateSaveEnabled()}
+// Runs automatically in the background as soon as a link shows up in
+// the field - on paste, on typing, on autofill - rather than needing a
+// separate "extract" tap. Debounced 600ms after the last change so a
+// link pasted or typed a character at a time doesn't fire a request
+// per keystroke. The link-value check after the await guards against a
+// stale response landing after the admin has already changed/cleared
+// the field again.
+function scheduleBranchExtract(){
+  clearTimeout(branchExtractTimer);
+  document.getElementById("branchLat").value="";
+  document.getElementById("branchLng").value="";
+  document.getElementById("branchMapBox").classList.remove("hasMap");
+  branchCoordsValid=false;
+  const fb=document.getElementById("branchExtractFeedback");
+  const link=document.getElementById("branchLink").value.trim();
+  if(!link){fb.textContent="";branchExtractInFlight=false;updateBranchSaveEnabled();return}
+  fb.textContent="";
+  updateBranchSaveEnabled();
+  branchExtractTimer=setTimeout(()=>runBranchExtract(link),600);
+}
+async function runBranchExtract(link){
+  const fb=document.getElementById("branchExtractFeedback");
+  branchExtractInFlight=true;
+  fb.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
+  updateBranchSaveEnabled();
+  try{
+    const r=await api("adminExtractCoords",{url:link});
+    if(document.getElementById("branchLink").value.trim()!==link)return; // link changed since this call started
+    if(!r.success){fb.textContent="❌ "+(r.error||"تعذر تحديد الموقع من هذا الرابط.");branchCoordsValid=false;return}
+    document.getElementById("branchLat").value=r.lat;
+    document.getElementById("branchLng").value=r.lng;
+    ensureBranchMap(r.lat,r.lng);
+    fb.textContent="✅ تم تحديد الموقع بنجاح.";
+    branchCoordsValid=true;
+  }catch(e){
+    if(document.getElementById("branchLink").value.trim()!==link)return;
+    fb.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع.";
+    branchCoordsValid=false;
+  }finally{
+    if(document.getElementById("branchLink").value.trim()===link){
+      branchExtractInFlight=false;
+      updateBranchSaveEnabled();
     }
   }
-  async function doSave(){
-    const name=nameInput.value.trim();
-    const lat=latInput.value.trim();
-    const lng=lngInput.value.trim();
-    if(!name||!lat||!lng)return; // Save stays disabled in this case - defensive only
-    const prevText=saveBtn.textContent;saveBtn.disabled=true;saveBtn.textContent="جارٍ الحفظ...";
-    try{
-      const r=await api("adminBranchesSave",{branchId:editingId||"",name:name,lat:lat,lng:lng,radiusMeters:editingRadius});
-      if(!r.success){alert(r.error||"تعذر حفظ الفرع.");return}
-      openBranchRow=null;
-      await loadAdminBranches();
-    }catch(e){
-      alert("تعذر الاتصال بالخادم أثناء حفظ الفرع.");
-    }finally{
-      saveBtn.textContent=prevText;
-      updateSaveEnabled();
-    }
+}
+async function saveAdminBranch(){
+  const name=document.getElementById("branchName").value.trim();
+  const lat=document.getElementById("branchLat").value.trim();
+  const lng=document.getElementById("branchLng").value.trim();
+  if(!name||!lat||!lng)return; // Save stays disabled in this case - defensive only
+  const radius=AdminS.editingBranchRadius||100;
+  const btn=document.getElementById("branchSaveBtn");
+  btn.disabled=true;const prevText=btn.textContent;btn.textContent="جارٍ الحفظ...";
+  try{
+    const r=await api("adminBranchesSave",{branchId:AdminS.editingBranchId||"",name:name,lat:lat,lng:lng,radiusMeters:radius});
+    if(!r.success){alert(r.error||"تعذر حفظ الفرع.");return}
+    resetBranchForm();
+    hideBranchForm();
+    await loadAdminBranches();
+  }catch(e){
+    alert("تعذر الاتصال بالخادم أثناء حفظ الفرع.");
+  }finally{
+    btn.textContent=prevText;
+    updateBranchSaveEnabled();
   }
-
-  const state={isDirty,discardAndCollapse};
-
-  if(isNew){
-    updateSaveEnabled();
-  }else{
-    nameInput.value=b.name;linkInput.value="";latInput.value=b.lat;lngInput.value=b.lng;
-    coordsValid=true; // the branch's own persisted coordinates, not a fresh extraction
-    updateSaveEnabled();
-    orig={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value};
-  }
-
-  return {row,open};
 }
 // Confirms locally first (using the employee list already loaded when
 // the admin panel opened, to word the warning accurately when
 // employees are actually assigned to this branch) then lets the
 // backend do the real deletion + reassignment + admin notice
 // (adminDeleteBranch_, 10_Branches.gs) - see that function's comment
-// for why there's no second server round trip just to confirm. Any
-// open row (this one or another) is cleared by loadAdminBranches()'s
-// full rebuild afterwards, so there's nothing extra to tidy up here.
+// for why there's no second server round trip just to confirm.
 async function deleteAdminBranch(b){
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
-  let msg='تنبيه ⚠️\n\nهل أنت متأكد من حذف فرع "'+b.name+'"؟';
+  let msg='هل أنت متأكد من حذف فرع "'+b.name+'"؟';
   if(affected.length){
-    msg+='\n\n🚨 يوجد '+affected.length+' موظف/موظفين مرتبطين بهذا الفرع حالياً. لن يتم نقلهم إلى "متجول" - بل سيتم تعطيل حسابهم من استخدام النظام تماماً (لن يتمكنوا من تسجيل حضور أو انصراف) حتى تعيّن لهم فرعاً جديداً يدوياً. سيصل تنبيه عاجل بذلك لجميع المشرفين.';
+    msg+='\n\n⚠️ يوجد '+affected.length+' موظف/موظفين مرتبطين بهذا الفرع حالياً. سيتم نقلهم تلقائياً إلى "بدون فرع" (متجول)، وسيصل تنبيه بذلك لجميع المشرفين.';
   }
   if(!confirm(msg))return;
   try{
     const r=await api("adminBranchesDelete",{branchId:b.id});
     if(!r.success){alert(r.error||"تعذر حذف الفرع.");return}
+    if(AdminS.editingBranchId===b.id){resetBranchForm();hideBranchForm()}
     await loadAdminBranches();
     if(!Object.values(AdminS.dirty).some(Boolean))loadAdminEmployees();
   }catch(e){
@@ -1319,19 +1278,22 @@ document.getElementById("adminOverlay").addEventListener("click",function(e){if(
 document.getElementById("adminEmpTabBtn").onclick=()=>switchAdminTab("employees");
 document.getElementById("adminBranchTabBtn").onclick=()=>switchAdminTab("branches");
 document.getElementById("adminEmpSaveBtn").onclick=saveAdminEmployees;
-// The add-branch flow just builds a blank row (buildBranchRow with no
-// argument), puts it at the top of the list, and opens it - open()
-// itself already handles confirming/discarding whatever other row was
-// open (see buildBranchRow). If that confirmation is declined, the
-// freshly-built row is removed again since nothing should be left
-// behind from an add that didn't go through.
 document.getElementById("branchAddBtn").onclick=async ()=>{
-  const list=document.getElementById("adminBranchList");
-  const emptyMsg=list.querySelector(".message");if(emptyMsg)emptyMsg.remove();
-  const {row,open}=buildBranchRow();
-  list.insertBefore(row,list.firstChild);
-  const opened=await open();
-  if(!opened)row.remove();
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في الفرع الحالي."))return;
+  }
+  resetBranchForm();
+  showBranchForm();
+  document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
+};
+document.getElementById("branchName").addEventListener("input",updateBranchSaveEnabled);
+document.getElementById("branchLink").addEventListener("input",scheduleBranchExtract);
+document.getElementById("branchSaveBtn").onclick=saveAdminBranch;
+document.getElementById("branchCancelBtn").onclick=async ()=>{
+  if(branchFormDirty()){
+    if(!await confirmUnsaved("لديك تغييرات غير محفوظة في هذا الفرع."))return;
+  }
+  resetBranchForm();hideBranchForm();
 };
 // Leaving the admin panel open but navigating the browser away (reload,
 // back, closing the tab) is the same "unsaved changes" situation - the
