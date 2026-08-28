@@ -240,6 +240,12 @@ input[readonly]{opacity:.75;cursor:default}
 .unsavedOverlay.hidden{display:none}
 .unsavedBox{background:var(--surface);border-radius:16px;padding:18px 18px 14px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .unsavedMsg{color:var(--text);font-size:14px;line-height:1.7;text-align:right;margin-bottom:4px}
+/* The plain "unsaved changes" prompt needs to read as clearly more
+   prominent than the Continue/Discard buttons beneath it - bold and
+   a size step above the main button's text (clamp(16px,4.5vw,18px)).
+   Scoped to the id (not the shared .unsavedMsg class) so the danger
+   modal's message, which reuses that class, is unaffected. */
+#unsavedMsg{font-weight:800;font-size:clamp(18px,5vw,20px)}
 .unsavedActions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .unsavedActions button{margin-top:0}
 
@@ -252,7 +258,6 @@ input[readonly]{opacity:.75;cursor:default}
 .dangerHead{display:flex;align-items:center;gap:9px;margin-bottom:6px}
 .dangerHeadIcon{font-size:23px;flex:none;line-height:1}
 .dangerTitle{font-weight:850;color:var(--danger);font-size:16px;line-height:1.4}
-.dangerNames{margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--danger) 10%,transparent);font-size:13px;line-height:1.9;text-align:right;max-height:150px;overflow-y:auto}
 </style>
 </head>
 
@@ -408,7 +413,6 @@ input[readonly]{opacity:.75;cursor:default}
   <div class="unsavedBox dangerBox">
     <div class="dangerHead"><span class="dangerHeadIcon">🚨</span><span id="dangerTitle" class="dangerTitle"></span></div>
     <div id="dangerMsg" class="unsavedMsg"></div>
-    <div id="dangerNames" class="dangerNames hidden"></div>
     <div class="unsavedActions">
       <button type="button" id="dangerConfirmBtn" class="danger"></button>
       <button type="button" id="dangerCancelBtn" class="cancelText">إلغاء</button>
@@ -859,25 +863,17 @@ document.getElementById("unsavedDiscardBtn").onclick=()=>{
 // has employees assigned to it) - same show/resolve pattern as
 // confirmUnsaved above, but its own overlay+resolve pair so a danger
 // confirm and an unsaved-changes confirm can never collide, and its
-// own visual treatment (red border, 🚨 header, optional list of
-// affected names) so it reads as materially more serious than a
-// routine "are you sure?". namesList is optional - pass an array of
-// strings to show them, or omit/empty for a plain confirmation.
+// own visual treatment (red border, 🚨 header) so it reads as
+// materially more serious than a routine "are you sure?". Any
+// affected-names detail is the caller's job to weave into `message`
+// itself (see deleteAdminBranch) rather than a separate block here.
 let dangerConfirmResolve=null;
-function confirmDanger(title,message,confirmLabel,namesList){
+function confirmDanger(title,message,confirmLabel){
   return new Promise(resolve=>{
     dangerConfirmResolve=resolve;
     document.getElementById("dangerTitle").textContent=title;
     document.getElementById("dangerMsg").textContent=message;
     document.getElementById("dangerConfirmBtn").textContent=confirmLabel;
-    const namesEl=document.getElementById("dangerNames");
-    if(namesList&&namesList.length){
-      namesEl.innerHTML="";
-      namesList.forEach(n=>{const d=document.createElement("div");d.textContent="• "+n;namesEl.appendChild(d)});
-      namesEl.classList.remove("hidden");
-    }else{
-      namesEl.classList.add("hidden");
-    }
     document.getElementById("dangerOverlay").classList.remove("hidden");
   });
 }
@@ -904,6 +900,7 @@ function branchFormDirty(){
 async function closeAdminPanel(){
   if(Object.values(AdminS.dirty).some(Boolean)){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في صفحة الموظفين. هل تريد الإغلاق بدون حفظ؟"))return;
+    discardAllEmployeeEdits();
   }
   if(branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع. هل تريد الإغلاق بدون حفظ؟"))return;
@@ -922,6 +919,7 @@ async function switchAdminTab(tab){
   if(curTab===tab){setAdminTab(tab);return}
   if(curTab==="employees"&&Object.values(AdminS.dirty).some(Boolean)){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في صفحة الموظفين."))return;
+    discardAllEmployeeEdits();
   }
   if(curTab==="branches"&&branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع."))return;
@@ -1034,7 +1032,7 @@ function renderAdminEmployees(){
     // likewise display-only now - not part of what this panel edits.
     const summary=document.createElement("div");summary.className="empRowSummary";
     const text=document.createElement("div");text.className="rowText";
-    const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent=emp.name||"—";
+    const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent="👤 "+(emp.name||"—");
     const metaEl=document.createElement("div");metaEl.className="rowLabel";metaEl.textContent=(emp.username?"@"+emp.username:"—")+"  ·  "+(emp.code||"—");
     text.append(nameEl,metaEl);
     const statusDot=document.createElement("div");statusDot.className="empStatusDot"+(emp.status==="Active"?" on":"");statusDot.title=emp.status==="Active"?"مفعّل":"غير مفعّل";
@@ -1106,8 +1104,32 @@ function renderAdminEmployees(){
     fieldOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     if(branchSelect)branchSelect.onchange=checkDirty;
 
-    empRowEls[emp.chatId]={name:emp.name,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId};
+    // Restores this row's radio + branch select back to the last-saved
+    // values (AdminS.original) and clears its dirty flag/dot - used by
+    // discardAllEmployeeEdits() below so choosing "تجاهل التغييرات"
+    // actually undoes the edit instead of just hiding it collapsed
+    // (which used to leave the changed-but-unsaved values sitting in
+    // the DOM, ready to resurface next time the row was reopened).
+    function revert(){
+      const orig=AdminS.original[emp.chatId];
+      branchOpt.input.checked=orig.jobTitle===JOB_TITLE_BRANCH;
+      fieldOpt.input.checked=orig.jobTitle!==JOB_TITLE_BRANCH;
+      if(branchSelect)branchSelectOptions(branchSelect,orig.branchId);
+      updateBranchVisibility();
+      AdminS.dirty[emp.chatId]=false;
+      dirtyDot.classList.add("hidden");
+    }
+
+    empRowEls[emp.chatId]={name:emp.name,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId,revert};
   });
+}
+// Reverts every employee row with unsaved edits back to its last-saved
+// values in one pass - called right after the admin confirms "تجاهل
+// التغييرات" in confirmUnsaved, so no edited-but-unsaved trace is left
+// behind (see revert() above).
+function discardAllEmployeeEdits(){
+  Object.values(empRowEls).forEach(els=>els&&els.revert&&els.revert());
+  updateAdminSaveBar();
 }
 function updateAdminSaveBar(){
   const count=Object.values(AdminS.dirty).filter(Boolean).length;
@@ -1219,7 +1241,7 @@ function buildBranchRow(b,isNew){
   // expand first.
   const summary=document.createElement("div");summary.className="branchRowSummary";
   const text=document.createElement("div");text.className="rowText";
-  const nameEl=document.createElement("div");nameEl.className="rowValue branchName";nameEl.textContent=isNew?"فرع جديد":b.name;
+  const nameEl=document.createElement("div");nameEl.className="rowValue branchName";nameEl.textContent="📍 "+(isNew?"فرع جديد":b.name);
   text.append(nameEl);
 
   const actions=document.createElement("div");actions.className="branchRowActions";
@@ -1491,11 +1513,11 @@ async function deleteAdminBranch(b,rowCtx){
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
   let ok;
   if(affected.length){
+    const namesInline=affected.map(e=>e.name).join(", ");
     ok=await confirmDanger(
       "تحذير خطير - يتطلب تدخلاً فورياً من المشرفين",
-      'حذف الفرع "'+b.name+'" سيعطّل فوراً '+affected.length+' موظف/موظفين مرتبطين به حالياً. لن يتم نقلهم إلى وضع "متجول" - بل لن يتمكنوا من تسجيل حضور أو انصراف على الإطلاق حتى تتم مراجعتهم يدوياً وتعيين فرع جديد لهم. سيصل تنبيه عاجل لجميع المشرفين، لكن يجب معالجة الأمر فور الحذف.',
-      "نعم، أعلم النتيجة واحذف الفرع",
-      affected.map(e=>e.name)
+      'حذف الفرع "'+b.name+'" سيعطّل فوراً '+affected.length+' موظف/موظفين مرتبطين به حالياً ('+namesInline+'). لن يتم نقلهم إلى وضع "متجول" - بل لن يتمكنوا من تسجيل حضور أو انصراف على الإطلاق حتى تتم مراجعتهم يدوياً وتعيين فرع جديد لهم. سيصل تنبيه عاجل لجميع المشرفين، لكن يجب معالجة الأمر فور الحذف.',
+      "نعم، أعلم النتيجة واحذف الفرع"
     );
   }else{
     ok=await confirmDanger(
