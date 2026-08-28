@@ -1031,20 +1031,18 @@ async function loadAdminEmployees(){
 // Saving with this selected now shows a strong confirmDanger warning
 // instead of being blocked outright - see saveAdminEmployees().
 //
-// selectedId can fail to match a real branch for two very different
-// reasons, and they must NOT be handled the same way:
-//  - it's empty (the admin just switched this row from field rep to
-//    branch employee and never had a branch yet) - a low-stakes
-//    default to the first branch is a reasonable convenience here.
-//  - it's non-empty but still doesn't match anything (the branch was
-//    deleted - BranchID gets set to the literal "none", see
-//    BRANCH_DELETED_NOTICE in 00_Config.gs). Silently swapping this
-//    for an arbitrary branch would look like the app picked a branch
-//    on the admin's behalf, which is exactly the wrong thing to do
-//    for an account a branch deletion just locked out - this lands on
-//    "بدون فرع" instead, same as the deliberate-choice case, so the
-//    admin has to actively pick a real branch (or knowingly leave it
-//    unset) either way.
+// Always mirrors the actual stored branchId rather than guessing at a
+// convenient default - this only ever runs against real saved data
+// (row build and revert() both call it with emp/orig.branchId, never
+// with a blank "just toggled the radio" value), so silently swapping
+// an empty or broken reference for an arbitrary first branch would
+// mean opening an unassigned employee's card shows a branch that was
+// never actually assigned - exactly the mismatch that should show
+// "بدون فرع" with the red flag instead. Whether selectedId is empty
+// (never assigned, or deliberately saved as "بدون فرع") or non-empty
+// but unmatched (the branch was deleted - BranchID left as the literal
+// "none", see BRANCH_DELETED_NOTICE in 00_Config.gs), both land on
+// "بدون فرع" the same way.
 function branchSelectOptions(select,selectedId){
   select.innerHTML="";
   const matchesReal=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
@@ -1059,7 +1057,7 @@ function branchSelectOptions(select,selectedId){
     opt.value=b.id;opt.textContent=b.name;
     select.appendChild(opt);
   });
-  select.value=matchesReal?selectedId:(selectedId?"":(AdminS.branches[0]?AdminS.branches[0].id:""));
+  select.value=matchesReal?selectedId:"";
   // Red border whenever "بدون فرع" is the current value, whether that's
   // a broken reference or a deliberate not-yet-decided choice - both
   // still mean this employee can't check in/out yet, so both deserve
