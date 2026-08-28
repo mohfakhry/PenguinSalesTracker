@@ -1051,7 +1051,7 @@ function branchSelectOptions(select,selectedId){
 
   const noneOpt=document.createElement("option");
   noneOpt.value="";
-  noneOpt.textContent="⚠️ بدون فرع";
+  noneOpt.textContent="⚠️ بدون فرع (يتطلب تعيين)";
   select.appendChild(noneOpt);
 
   AdminS.branches.forEach(b=>{
@@ -1108,7 +1108,14 @@ function renderAdminEmployees(){
       let roleLine=empIsBranch?JOB_TITLE_BRANCH:JOB_TITLE_FIELD;
       if(empIsBranch){
         const br=AdminS.branches.find(x=>x.id===emp.branchId);
-        roleLine+=" · "+(br?br.name:(emp.branchId==="none"?"⚠️ بدون فرع (يتطلب تعيين)":"—"));
+        // Any branch employee with no matching branch gets the same
+        // warning badge here, regardless of *why* - a deliberately
+        // empty branchId (admin picked "بدون فرع", or a fresh
+        // field->branch switch never assigned one) and a broken
+        // reference left by a deleted branch (branchId==="none") both
+        // mean the same thing for this employee: no branch, no
+        // check-in/out until an admin fixes it.
+        roleLine+=" · "+(br?br.name:"⚠️ بدون فرع (يتطلب تعيين)");
       }
       roleEl=document.createElement("div");roleEl.className="rowLabel";roleEl.textContent=roleLine;
     }
