@@ -201,6 +201,12 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .adminList{padding:2px 0}
 
 .empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
+/* Same red-flag treatment as .selectError, applied to the whole card
+   instead of just the dropdown inside it - a branch employee with no
+   matching branch (deliberately unassigned, or a broken reference from
+   a deleted branch) reads as needing attention even while collapsed,
+   not just once the row is expanded down to the select. */
+.empRow.empRowError{border:1.5px solid var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
 .empRowSummary{display:flex;align-items:center;gap:10px;cursor:pointer}
 .empStatusDot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
 .empStatusDot.on{background:var(--success)}
@@ -1112,8 +1118,11 @@ function renderAdminEmployees(){
         // field->branch switch never assigned one) and a broken
         // reference left by a deleted branch (branchId==="none") both
         // mean the same thing for this employee: no branch, no
-        // check-in/out until an admin fixes it.
+        // check-in/out until an admin fixes it. Same red flag on the
+        // card itself (.empRowError) so it's visible collapsed too,
+        // not just once expanded down to the select.
         roleLine+=" · "+(br?br.name:"⚠️ بدون فرع (يتطلب تعيين)");
+        row.classList.toggle("empRowError",!br);
       }
       roleEl=document.createElement("div");roleEl.className="rowLabel";roleEl.textContent=roleLine;
     }
