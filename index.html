@@ -179,6 +179,14 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 input[type=text],select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:14px}
 input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--button) 40%,transparent);outline-offset:1px}
 
+/* Strong visual flag for a branch <select> that's showing the
+   "⚠️ بدون فرع" placeholder because the employee's stored branch no
+   longer exists (see branchSelectOptions()) - a red border + tinted
+   background so it reads as broken, not just an ordinary empty field,
+   and can't be mistaken for the app having already handled it. */
+.selectError{border:1.5px solid var(--danger)!important;background:color-mix(in srgb,var(--danger) 8%,var(--bg))!important}
+.selectError:focus{outline-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+
 /* Custom select arrow: the native one is removed (appearance:none) and
    replaced with a bold CSS chevron drawn on .selectWrap::after, so it
    can use var(--text) (native arrows can't follow the app's theme) and
@@ -1000,19 +1008,38 @@ async function loadAdminEmployees(){
 // The dropdown only ever lists actual branches now - "متجول (بدون فرع)"
 // is a job-title choice (see fieldOpt in the radio group above), not a
 // branch, so it has no business appearing as a selectable option here.
-// A "موظف فرع" always needs a real branch, so if the employee doesn't
-// have one yet (was just switched from field rep, or somehow has an
-// unrecognized id) this defaults the dropdown to the first branch
-// rather than leaving it on a value that matches nothing.
+//
+// selectedId can fail to match a real branch for two very different
+// reasons, and they must NOT be handled the same way:
+//  - it's empty (the admin just switched this row from field rep to
+//    branch employee and never had a branch yet) - a low-stakes
+//    default to the first branch is a reasonable convenience here.
+//  - it's non-empty but still doesn't match anything (the branch was
+//    deleted - BranchID gets set to the literal "none", see
+//    BRANCH_DELETED_NOTICE in 00_Config.gs). Silently swapping this
+//    for an arbitrary branch would look like the app picked a branch
+//    on the admin's behalf, which is exactly the wrong thing to do
+//    for an account a branch deletion just locked out - the choice
+//    has to stay visibly unmade until an admin actually makes it.
 function branchSelectOptions(select,selectedId){
   select.innerHTML="";
+  const matchesReal=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
+  const isBrokenRef=!!selectedId&&!matchesReal;
+  if(isBrokenRef){
+    const placeholder=document.createElement("option");
+    placeholder.value="";
+    placeholder.textContent="⚠️ بدون فرع - يجب اختيار فرع";
+    select.appendChild(placeholder);
+  }
   AdminS.branches.forEach(b=>{
     const opt=document.createElement("option");
     opt.value=b.id;opt.textContent=b.name;
     select.appendChild(opt);
   });
-  const hasSelected=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
-  select.value=hasSelected?selectedId:(AdminS.branches[0]?AdminS.branches[0].id:"");
+  select.value=isBrokenRef?"":(matchesReal?selectedId:(AdminS.branches[0]?AdminS.branches[0].id:""));
+  // Red border on the select itself so a broken branch reference reads
+  // as a real problem needing attention, not just an empty field.
+  select.classList.toggle("selectError",isBrokenRef);
 }
 function makeRadio(name,value,label,checked){
   const wrap=document.createElement("label");wrap.className="radioOption";
@@ -1129,7 +1156,10 @@ function renderAdminEmployees(){
     }
     branchOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
     fieldOpt.input.onchange=()=>{updateBranchVisibility();checkDirty()};
-    if(branchSelect)branchSelect.onchange=checkDirty;
+    if(branchSelect)branchSelect.onchange=()=>{
+      branchSelect.classList.toggle("selectError",!branchSelect.value);
+      checkDirty();
+    };
 
     // Restores this row's radio + branch select back to the last-saved
     // values (AdminS.original) and clears its dirty flag/dot - used by
@@ -1167,6 +1197,22 @@ function updateAdminSaveBar(){
 async function saveAdminEmployees(){
   const changedIds=Object.keys(AdminS.dirty).filter(id=>AdminS.dirty[id]);
   if(!changedIds.length)return;
+
+  // Block the whole save if any changed row is a branch employee whose
+  // dropdown is still sitting on the "⚠️ بدون فرع" placeholder (e.g.
+  // its old branch was deleted - see branchSelectOptions()). Sending
+  // an empty BranchID would just bounce off the backend anyway, and
+  // silently saving everything else while leaving this one unresolved
+  // makes it too easy to miss that a locked-out employee still needs
+  // attention.
+  const unresolved=changedIds
+    .map(id=>({id,els:empRowEls[id]}))
+    .filter(x=>x.els&&x.els.currentJobTitle()===JOB_TITLE_BRANCH&&!x.els.currentBranchId());
+  if(unresolved.length){
+    alert("لا يمكن الحفظ: يجب اختيار فرع للموظف/الموظفين التاليين أولاً:\n"+unresolved.map(x=>x.els.name).join(", "));
+    return;
+  }
+
   const btn=document.getElementById("adminEmpSaveBtn");
   btn.disabled=true;btn.textContent="جارٍ الحفظ...";
   const changes=changedIds.map(id=>{
