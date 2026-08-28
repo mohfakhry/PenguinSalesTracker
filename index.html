@@ -523,7 +523,13 @@ const UI_TEXT={
 };
 function V(){return UI_TEXT[S.locationMode==="geofence"?"geofence":"freeRoam"]}
 
-const S={busy:false,action:null,name:"الموظف",isLeader:false,geofenceModuleAvailable:false,locationMode:"freeRoam",coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
+const S={busy:false,action:null,name:"الموظف",isLeader:false,geofenceModuleAvailable:false,locationMode:"freeRoam",hasBranch:true,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
+// True only when the backend explicitly says a geofenced employee has
+// no branch assigned yet (r.hasBranch===false in the /status response -
+// 04_Attendance.gs / getMiniAppStatus). Missing/undefined is treated as
+// assigned, so this stays backward-compatible until the backend field
+// is added. Free-roam employees are never gated by this.
+function branchUnassigned(){return S.locationMode==="geofence"&&S.hasBranch===false}
 
 // =========================
 // EDITABLE HELP CENTER CONTENT
@@ -667,6 +673,18 @@ function renderHome(){
   if(previousRetry)previousRetry.remove();
   clearFeedback();
   const v=V();
+
+  // Unassigned-branch employees: keep them on the home screen (so the
+  // help button / admin FAB etc. stay reachable) but hide check-in/out
+  // entirely rather than letting them hit the backend and fail there -
+  // saves the round trip and matches server-side rejection anyway.
+  if(branchUnassigned()){
+    home("⏳","بانتظار تعيين الفرع","لم يتم تعيين فرع لك بعد. سيتم تفعيل أزرار الحضور والانصراف تلقائياً فور تعيين فرعك من قبل الإدارة.","warningIcon");
+    document.getElementById("actionButtons").classList.add("hidden");
+    document.getElementById("footerStatus").textContent="بانتظار تعيين الفرع";
+    return;
+  }
+
   home(v.homeIcon,v.homeTitle,v.homeMsg,"success");
   document.getElementById("actionButtons").classList.remove("hidden");
 
@@ -720,7 +738,7 @@ function openConfirm(action){
   startClock();
   loadConfirmLocationPreview(action);
 }
-function confirmAction(action){if(S.busy)return;openConfirm(action)}
+function confirmAction(action){if(S.busy)return;if(branchUnassigned())return;openConfirm(action)}
 function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}))}
 async function postAction(){
   if(S.busy)return;
@@ -784,7 +802,7 @@ function showRegistration(){stopClock();screen("registration");document.getEleme
 function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
 function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
 function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent="تفعيل البوت مطلوب";if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
-async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.geofenceModuleAvailable=!!r.geofenceModuleAvailable;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.geofenceModuleAvailable=!!r.geofenceModuleAvailable;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";S.hasBranch=r.hasBranch!==false;document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
