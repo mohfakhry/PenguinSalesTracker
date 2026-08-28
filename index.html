@@ -35,7 +35,7 @@ h2{margin:0;font-size:clamp(21px,6.5vw,27px);font-weight:850}
 
 .mapWrap{padding-bottom:14px}
 .mapBox{position:relative;width:100%;height:150px;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--muted) 10%,transparent)}
-.branchMapBox{height:230px}
+.branchMapBox{height:460px}
 .mapSkeleton{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:0 12px}
 .mapBox.hasMap .mapSkeleton{display:none}
 .leaflet-container{background:transparent;font-family:inherit}
@@ -92,7 +92,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .help-overlay.hidden{display:none}
 .help-inner{position:relative;width:min(100%,440px);max-height:min(82vh,640px);max-height:min(82dvh,640px);background:var(--surface);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;padding:16px 16px 14px;overflow:hidden}
 .help-header{flex:none;display:flex;align-items:center;padding:2px 2px 14px 44px}
-.help-close{position:absolute;top:12px;left:12px;width:36px;height:36px;min-height:0;margin:0;flex:none;border-radius:50%;background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--text);font-size:18px;line-height:1;padding:0}
+.help-close{position:absolute;top:12px;left:12px;width:36px;height:36px;min-height:0;margin:0;flex:none;border-radius:50%;background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--text);font-size:26px;font-weight:800;line-height:1;padding:0}
 .help-title{font-size:clamp(19px,5vw,23px);font-weight:850}
 
 .tabs{flex:none;display:flex;gap:6px;margin-top:2px}
@@ -131,7 +131,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .row{padding:8px 0}
   .mapWrap{padding-bottom:8px}
   .mapBox{height:96px}
-  .branchMapBox{height:170px}
+  .branchMapBox{height:340px}
   button{min-height:46px;margin-top:8px;padding:10px 16px;font-size:15px}
   .action{min-height:52px}
   .back{min-height:34px;margin-top:4px}
@@ -143,7 +143,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .help-overlay{padding:10px}
   .help-inner{padding:12px 12px 10px;max-height:90vh;max-height:90dvh}
   .help-header{padding:2px 2px 10px 40px}
-  .help-close{width:32px;height:32px;top:8px;left:8px;font-size:16px}
+  .help-close{width:32px;height:32px;top:8px;left:8px;font-size:22px}
   .help-title{font-size:18px}
   .tab{padding:9px 8px;font-size:13px}
   .faqItem{padding:9px 0}
@@ -152,7 +152,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .icon{width:44px;height:44px;font-size:20px;margin-bottom:8px}
   .screen{padding:14px 16px}
   .mapBox{height:78px}
-  .branchMapBox{height:120px}
+  .branchMapBox{height:240px}
   h2{font-size:17px}
   .message{font-size:13px}
 }
@@ -204,6 +204,7 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .branchRowDetails{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
 .branchRowDetails.hidden{display:none}
 .branchRowActions{display:flex;gap:6px;flex:none}
+.branchName{font-size:17px}
 .rowIconBtn{width:auto;min-height:0;margin:0;padding:7px 10px;border-radius:10px;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--text);font-size:14px;border:0}
 .rowIconBtn:active{transform:scale(.92)}
 
@@ -311,7 +312,7 @@ input[readonly]{opacity:.75;cursor:default}
     <div class="txt"><div id="activeBannerTitle" class="title">الزيارة نشطة الآن</div><span id="activeBannerTxt">يرجى تذكر إنهاء الزيارة عند الانتهاء.</span></div>
     <div class="icon2">🛡️</div>
   </div>
-  <div id="warning" class="warning hidden"><div class="warningTitle">⚠️ تنبيه</div><div id="warningMsg"></div><div id="supervisors" class="supervisors hidden"><div style="margin:10px 0 4px;font-weight:800">إبلاغ المشرف</div><div id="supervisorLinks"></div></div></div>
+  <div id="warning" class="warning hidden"><div class="warningTitle">تنبيه ⚠️</div><div id="warningMsg"></div><div id="supervisors" class="supervisors hidden"><div style="margin:10px 0 4px;font-weight:800">إبلاغ المشرف</div><div id="supervisorLinks"></div></div></div>
   <button id="continueBtn">تم</button>
 </section>
 
@@ -359,7 +360,7 @@ input[readonly]{opacity:.75;cursor:default}
     <div class="tabContent">
       <section id="adminEmployeesPanel" class="adminPanel">
         <div id="adminEmpList" class="adminList"></div>
-        <div class="steps">إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
+        <div class="steps"><strong>تنبيه ⚠️</strong> إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
         <div class="adminSaveBar">
           <button type="button" id="adminEmpSaveBtn" disabled>لا توجد تغييرات</button>
         </div>
@@ -746,6 +747,10 @@ else if(initTelegram())refresh();
 const AdminS={employees:[],original:{},dirty:{},branches:[],branchList:[],loadedBranches:false};
 let empRowEls={};
 let openEmpDetails=null; // the one expanded row's details element, if any - see toggleDetails below
+function closeOpenEmpRow(){
+  openEmpDetails&&openEmpDetails.classList.add("hidden");
+  openEmpDetails=null;
+}
 
 // Branches tab: every row owns its own inline expandable edit card
 // (see buildBranchRow below) instead of all rows sharing one form.
@@ -831,6 +836,8 @@ async function closeAdminPanel(){
   if(branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع. هل تريد الإغلاق بدون حفظ؟"))return;
   }
+  if(openEmpDetails)closeOpenEmpRow();
+  if(openBranchDetails)closeOpenBranchRow();
   document.getElementById("adminOverlay").classList.add("hidden");
 }
 // Wraps setAdminTab for the tab buttons themselves: switching away from
@@ -846,8 +853,14 @@ async function switchAdminTab(tab){
   }
   if(curTab==="branches"&&branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع."))return;
-    closeOpenBranchRow();
   }
+  // Moving away from either tab always collapses whatever card was
+  // open there, whether or not it held edits - an open-but-unedited
+  // card shouldn't just sit there expanded once you've navigated
+  // elsewhere. Employee rows never discard values on collapse (unlike
+  // branch rows), so this is purely visual - any dirty dot stays put.
+  if(curTab==="employees"&&openEmpDetails)closeOpenEmpRow();
+  if(curTab==="branches"&&openBranchDetails)closeOpenBranchRow();
   setAdminTab(tab);
 }
 function setAdminTab(tab){
@@ -1134,7 +1147,7 @@ function buildBranchRow(b,isNew){
   // expand first.
   const summary=document.createElement("div");summary.className="branchRowSummary";
   const text=document.createElement("div");text.className="rowText";
-  const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent=isNew?"فرع جديد":b.name;
+  const nameEl=document.createElement("div");nameEl.className="rowValue branchName";nameEl.textContent=isNew?"فرع جديد":b.name;
   text.append(nameEl);
 
   const actions=document.createElement("div");actions.className="branchRowActions";
@@ -1370,7 +1383,7 @@ async function deleteAdminBranch(b,rowCtx){
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
   let msg='هل أنت متأكد من حذف فرع "'+b.name+'"؟';
   if(affected.length){
-    msg+='\n\n⚠️ يوجد '+affected.length+' موظف/موظفين مرتبطين بهذا الفرع حالياً. سيتم نقلهم تلقائياً إلى "بدون فرع" (متجول)، وسيصل تنبيه بذلك لجميع المشرفين.';
+    msg+='\n\nتنبيه ⚠️ يوجد '+affected.length+' موظف/موظفين مرتبطين بهذا الفرع حالياً. سيتم نقلهم تلقائياً إلى "بدون فرع" (متجول)، وسيصل تنبيه بذلك لجميع المشرفين.';
   }
   if(!confirm(msg))return;
   try{
