@@ -1023,9 +1023,13 @@ async function loadAdminEmployees(){
     updateAdminSaveBar();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الموظفين.",loadAdminEmployees)}
 }
-// The dropdown only ever lists actual branches now - "متجول (بدون فرع)"
-// is a job-title choice (see fieldOpt in the radio group above), not a
-// branch, so it has no business appearing as a selectable option here.
+// The dropdown always includes an explicit "بدون فرع" choice now (value
+// ""), not just as a fallback placeholder for a broken reference - so
+// the admin can deliberately leave a branch employee unassigned (e.g.
+// the leader hasn't decided which branch they'll get yet) instead of
+// "متجول (بدون فرع)" only existing as the field-rep job-title option.
+// Saving with this selected now shows a strong confirmDanger warning
+// instead of being blocked outright - see saveAdminEmployees().
 //
 // selectedId can fail to match a real branch for two very different
 // reasons, and they must NOT be handled the same way:
@@ -1037,27 +1041,30 @@ async function loadAdminEmployees(){
 //    BRANCH_DELETED_NOTICE in 00_Config.gs). Silently swapping this
 //    for an arbitrary branch would look like the app picked a branch
 //    on the admin's behalf, which is exactly the wrong thing to do
-//    for an account a branch deletion just locked out - the choice
-//    has to stay visibly unmade until an admin actually makes it.
+//    for an account a branch deletion just locked out - this lands on
+//    "بدون فرع" instead, same as the deliberate-choice case, so the
+//    admin has to actively pick a real branch (or knowingly leave it
+//    unset) either way.
 function branchSelectOptions(select,selectedId){
   select.innerHTML="";
   const matchesReal=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
-  const isBrokenRef=!!selectedId&&!matchesReal;
-  if(isBrokenRef){
-    const placeholder=document.createElement("option");
-    placeholder.value="";
-    placeholder.textContent="⚠️ بدون فرع - يجب اختيار فرع";
-    select.appendChild(placeholder);
-  }
+
+  const noneOpt=document.createElement("option");
+  noneOpt.value="";
+  noneOpt.textContent="⚠️ بدون فرع";
+  select.appendChild(noneOpt);
+
   AdminS.branches.forEach(b=>{
     const opt=document.createElement("option");
     opt.value=b.id;opt.textContent=b.name;
     select.appendChild(opt);
   });
-  select.value=isBrokenRef?"":(matchesReal?selectedId:(AdminS.branches[0]?AdminS.branches[0].id:""));
-  // Red border on the select itself so a broken branch reference reads
-  // as a real problem needing attention, not just an empty field.
-  select.classList.toggle("selectError",isBrokenRef);
+  select.value=matchesReal?selectedId:(selectedId?"":(AdminS.branches[0]?AdminS.branches[0].id:""));
+  // Red border whenever "بدون فرع" is the current value, whether that's
+  // a broken reference or a deliberate not-yet-decided choice - both
+  // still mean this employee can't check in/out yet, so both deserve
+  // the same visual flag.
+  select.classList.toggle("selectError",!select.value);
 }
 function makeRadio(name,value,label,checked){
   const wrap=document.createElement("label");wrap.className="radioOption";
@@ -1216,19 +1223,29 @@ async function saveAdminEmployees(){
   const changedIds=Object.keys(AdminS.dirty).filter(id=>AdminS.dirty[id]);
   if(!changedIds.length)return;
 
-  // Block the whole save if any changed row is a branch employee whose
-  // dropdown is still sitting on the "⚠️ بدون فرع" placeholder (e.g.
-  // its old branch was deleted - see branchSelectOptions()). Sending
-  // an empty BranchID would just bounce off the backend anyway, and
-  // silently saving everything else while leaving this one unresolved
-  // makes it too easy to miss that a locked-out employee still needs
-  // attention.
+  // A changed row can now be a branch employee with no branch chosen -
+  // deliberately allowed (see branchSelectOptions()), e.g. the leader
+  // hasn't decided yet which branch this employee will belong to. That
+  // no longer blocks the save outright, but still needs the admin to
+  // consciously accept the consequence first: this employee will save
+  // successfully but can't check in/out until a real branch is set.
+  // Same confirmDanger red/🚨 treatment as deleting a branch that still
+  // has employees on it (deleteAdminBranch below) - same category of
+  // "make sure this is really what you want" moment.
   const unresolved=changedIds
     .map(id=>({id,els:empRowEls[id]}))
     .filter(x=>x.els&&x.els.currentJobTitle()===JOB_TITLE_BRANCH&&!x.els.currentBranchId());
   if(unresolved.length){
-    alert("لا يمكن الحفظ: يجب اختيار فرع للموظف/الموظفين التاليين أولاً:\n"+unresolved.map(x=>x.els.name).join(", "));
-    return;
+    const namesInline=unresolved.map(x=>x.els.name).join(", ");
+    const ok=await confirmDanger(
+      "تحذير - لم يتم تحديد فرع",
+      (unresolved.length>1
+        ?"لم يتم اختيار فرع لهؤلاء الموظفين: "+namesInline+"."
+        :"لم يتم اختيار فرع للموظف "+namesInline+".")+
+      " ربما لم يقرر المشرف بعد أي فرع سيُسند إليهم. سيتم حفظ التغييرات، لكن لن يتمكنوا من تسجيل حضور أو انصراف حتى يتم تعيين فرع لهم لاحقاً.",
+      "نعم، احفظ بدون فرع"
+    );
+    if(!ok)return;
   }
 
   const btn=document.getElementById("adminEmpSaveBtn");
