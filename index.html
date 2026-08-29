@@ -1357,6 +1357,17 @@ async function saveAdminEmployees(){
         orig.jobTitle=els.currentJobTitle();
         orig.branchId=els.currentBranchId();
       }
+      // AdminS.employees is what renderAdminEmployees() actually reads
+      // (the collapsed roleLine text, the dropdown's selected value) -
+      // without updating it too, a newly-assigned branch (or job-title
+      // change) wouldn't show up until the whole panel is reopened,
+      // even though the save itself already succeeded and
+      // AdminS.original/AdminS.dirty have already moved on above.
+      const emp=AdminS.employees.find(e=>e.chatId===id);
+      if(emp&&els){
+        emp.jobTitle=els.currentJobTitle();
+        emp.branchId=els.currentBranchId();
+      }
     });
     renderAdminEmployees();
     if(r.failed&&r.failed.length){
@@ -1390,6 +1401,20 @@ async function loadAdminBranches(){
     if(!r.success){renderListError(list,r.error||"تعذر التحميل.",loadAdminBranches);return}
     AdminS.branchList=r.branches||[];
     AdminS.loadedBranches=true;
+    // Keep the Employees tab's branch dropdown in sync too - AdminS.branches
+    // is a separate snapshot, seeded once from adminEmployeesList's own
+    // response, that would otherwise only ever reflect whatever the
+    // branch list looked like when the Employees tab was first opened -
+    // missing anything added/renamed/removed here afterward until the
+    // whole panel is reopened. This runs on every loadAdminBranches()
+    // call (initial tab open, and after every branch save/delete below),
+    // so it's always current. Re-rendering the employees list here is
+    // safe even though we're on the Branches tab right now: switching
+    // tabs already forces any dirty employee edits to be confirmed/
+    // discarded first (see switchAdminTab), so there's never an
+    // in-progress edit this could clobber.
+    AdminS.branches=AdminS.branchList.map(b=>({id:b.id,name:b.name}));
+    if(AdminS.employees.length)renderAdminEmployees();
     renderAdminBranchList();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الفروع.",loadAdminBranches)}
 }
