@@ -198,6 +198,14 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .selectWrap::after{content:"";position:absolute;left:17px;top:50%;width:9px;height:9px;border-right:3px solid var(--text);border-bottom:3px solid var(--text);transform:translateY(-65%) rotate(45deg);pointer-events:none}
 
 .adminPanel{display:flex;flex-direction:column}
+.lockBanner{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--warning) 14%,transparent);color:var(--text);text-align:right;line-height:1.6;font-size:13px;font-weight:750}
+/* Everything in a locked tab stays visible (read-only browsing) except
+   the banner itself, which needs to stay interactive/undimmed so its
+   text is legible. Direct children only, since adminEmpList/.steps/
+   .adminSaveBar (or branchAddBtn/adminBranchList on the branches side)
+   are all direct children of the section - see openAdminPanel()'s
+   comment block for the full lock lifecycle. */
+.adminPanel.panelLocked>*:not(.lockBanner){pointer-events:none;opacity:.55}
 .adminList{padding:2px 0}
 
 .empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
@@ -409,6 +417,7 @@ input[readonly]{opacity:.75;cursor:default}
     </div>
     <div class="tabContent">
       <section id="adminEmployeesPanel" class="adminPanel">
+        <div id="adminEmpLockBanner" class="lockBanner hidden"></div>
         <div id="adminEmpList" class="adminList"></div>
         <div class="steps"><strong>تنبيه ⚠️</strong> إذا أردت إضافة موظف جديد أو إزالة موظف، يكفي إضافته إلى مجموعة تيليجرام أو إخراجه منها مباشرة - لا حاجة لأي خطوة أخرى هنا.</div>
         <div class="adminSaveBar">
@@ -416,6 +425,7 @@ input[readonly]{opacity:.75;cursor:default}
         </div>
       </section>
       <section id="adminBranchesPanel" class="adminPanel hidden">
+        <div id="adminBranchLockBanner" class="lockBanner hidden"></div>
         <button type="button" id="branchAddBtn" class="branchAddBtn">➕ إضافة فرع جديد</button>
         <div id="adminBranchList" class="adminList"></div>
       </section>
@@ -823,7 +833,12 @@ else if(initTelegram())refresh();
 // group-admin status server-side via requireMiniAppLeader_()
 // (04_Attendance.gs), so hiding the button here is not the actual
 // security boundary.
-const AdminS={employees:[],original:{},dirty:{},branches:[],branchList:[],loadedBranches:false};
+const AdminS={employees:[],original:{},dirty:{},branches:[],branchList:[],loadedBranches:false,
+  // Whole-tab edit lock (see acquireOrRefreshLock() below) - independent
+  // per tab, since one admin editing Employees shouldn't block another
+  // admin working on Branches at the same time.
+  lock:{employees:{editable:true,ownerName:null},branches:{editable:true,ownerName:null}}
+};
 let empRowEls={};
 let openEmpDetails=null; // the one expanded row's details element, if any - see toggleDetails below
 function closeOpenEmpRow(){
@@ -867,12 +882,70 @@ function renderListError(container,message,retryFn){
   container.appendChild(btn);
 }
 
+// ---- whole-tab edit lock (Employees / Branches) ----
+// Prevents two admins from editing the same tab at once: whoever opens
+// a tab first claims it server-side (adminTabLock action, backend
+// TTL-based - see the comment above AdminS's `lock` field). Every
+// other admin sees that tab wrapped in the same read-only shell used
+// elsewhere for a broken reference (.panelLocked, mirroring
+// .selectError/.empRowError's "visible but flagged" treatment), with a
+// banner naming who's editing. Polling both refreshes the holder's own
+// lock so it doesn't expire mid-edit, and lets a blocked admin regain
+// editing automatically the moment it's freed - see
+// acquireOrRefreshLock(). If an admin just vanishes (closed the app,
+// lost connection) instead of switching tabs or closing the panel
+// normally, nothing here can release their lock for them - the
+// backend TTL is what eventually frees it, not this polling.
+const ADMIN_LOCK_POLL_MS=20000;
+let adminLockPollTimer=null;
+function activeAdminTab(){
+  return document.getElementById("adminEmpTabBtn").classList.contains("active")?"employees":"branches";
+}
+async function acquireOrRefreshLock(tab){
+  try{
+    const r=await api("adminTabLock",{tab});
+    if(r&&r.success)AdminS.lock[tab]={editable:!!r.editable,ownerName:r.ownerName||null};
+  }catch(e){
+    // A single failed poll (network hiccup) shouldn't flip an editable
+    // admin to locked - keep the last known state and retry next tick.
+  }
+  applyLockUI(tab);
+}
+function applyLockUI(tab){
+  const state=AdminS.lock[tab];
+  const locked=!state.editable;
+  const panelId=tab==="employees"?"adminEmployeesPanel":"adminBranchesPanel";
+  const bannerId=tab==="employees"?"adminEmpLockBanner":"adminBranchLockBanner";
+  document.getElementById(panelId).classList.toggle("panelLocked",locked);
+  const banner=document.getElementById(bannerId);
+  banner.classList.toggle("hidden",!locked);
+  if(locked)banner.textContent="🔒 قيد التعديل الآن من قبل "+(state.ownerName||"مشرف آخر")+" - يمكنك الاطلاع فقط حتى ينتهي.";
+  if(tab==="employees")updateAdminSaveBar();
+}
+function startLockPolling(tab){
+  stopLockPolling();
+  acquireOrRefreshLock(tab);
+  adminLockPollTimer=setInterval(()=>acquireOrRefreshLock(activeAdminTab()),ADMIN_LOCK_POLL_MS);
+}
+function stopLockPolling(){
+  if(adminLockPollTimer){clearInterval(adminLockPollTimer);adminLockPollTimer=null}
+}
+// Best-effort only, never awaited by a caller - releasing a lock a
+// moment early just lets another admin start sooner; failing to
+// release it (closed tab, lost connection) is already covered by the
+// backend TTL, so nothing here needs to block the UI on this call.
+function releaseLockBestEffort(tab){
+  if(!tab)return;
+  api("adminTabUnlock",{tab}).catch(()=>{});
+}
+
 function openAdminPanel(){
   document.getElementById("adminBranchTabBtn").classList.toggle("hidden",!S.geofenceModuleAvailable);
   setAdminTab("employees");
   document.querySelector(".app").scrollTop=0;
   document.getElementById("adminOverlay").classList.remove("hidden");
   loadAdminEmployees();
+  startLockPolling("employees");
 }
 
 // ---- unsaved-changes confirmation (shared by the employees list and
@@ -950,6 +1023,8 @@ async function closeAdminPanel(){
   if(openEmpDetails)closeOpenEmpRow();
   if(openBranchDetails)closeOpenBranchRow();
   document.getElementById("adminOverlay").classList.add("hidden");
+  releaseLockBestEffort(activeAdminTab());
+  stopLockPolling();
 }
 // Wraps setAdminTab for the tab buttons themselves: switching away from
 // a tab that has unsaved edits needs the same confirmation as closing
@@ -974,6 +1049,8 @@ async function switchAdminTab(tab){
   if(curTab==="employees"&&openEmpDetails)closeOpenEmpRow();
   if(curTab==="branches"&&openBranchDetails)closeOpenBranchRow();
   setAdminTab(tab);
+  releaseLockBestEffort(curTab);
+  startLockPolling(tab);
 }
 function setAdminTab(tab){
   document.getElementById("adminEmpTabBtn").classList.toggle("active",tab==="employees");
@@ -1230,12 +1307,14 @@ function discardAllEmployeeEdits(){
 function updateAdminSaveBar(){
   const count=Object.values(AdminS.dirty).filter(Boolean).length;
   const btn=document.getElementById("adminEmpSaveBtn");
-  btn.disabled=count===0;
-  btn.textContent=count>0?("حفظ التغييرات ("+count+")"):"لا توجد تغييرات";
+  const locked=!AdminS.lock.employees.editable;
+  btn.disabled=locked||count===0;
+  btn.textContent=locked?"🔒 مقفل من قبل مشرف آخر":(count>0?("حفظ التغييرات ("+count+")"):"لا توجد تغييرات");
 }
 async function saveAdminEmployees(){
   const changedIds=Object.keys(AdminS.dirty).filter(id=>AdminS.dirty[id]);
   if(!changedIds.length)return;
+  if(!AdminS.lock.employees.editable)return; // belt-and-suspenders - the disabled/pointer-events-blocked button shouldn't be reachable, but never trust that alone
 
   // A changed row can now be a branch employee with no branch chosen -
   // deliberately allowed (see branchSelectOptions()), e.g. the leader
@@ -1557,6 +1636,7 @@ function buildBranchRow(b,isNew){
     const lat=latInput.value.trim();
     const lng=lngInput.value.trim();
     if(!name||!lat||!lng)return; // Save stays disabled in this case - defensive only
+    if(!AdminS.lock.branches.editable)return; // belt-and-suspenders - see saveAdminEmployees()'s matching guard
     saveBtn.disabled=true;const prevText=saveBtn.textContent;saveBtn.textContent="جارٍ الحفظ...";
     try{
       const r=await api("adminBranchesSave",{branchId:b?b.id:"",name:name,lat:lat,lng:lng,radiusMeters:radiusMeters});
@@ -1632,6 +1712,7 @@ async function startNewBranchRow(){
 // soften it into "moved to roaming", or the admin deletes the branch
 // thinking it's a harmless reassignment.
 async function deleteAdminBranch(b,rowCtx){
+  if(!AdminS.lock.branches.editable)return; // belt-and-suspenders - see saveAdminEmployees()'s matching guard
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
   let ok;
   if(affected.length){
