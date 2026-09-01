@@ -208,6 +208,21 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .adminPanel.panelLocked>*:not(.lockBanner){pointer-events:none;opacity:.55}
 .adminList{padding:2px 0}
 
+/* Whole-panel busy lock: while ANY admin write is in flight (branch
+   add/edit/delete, employee save, or either list (re)loading), the
+   entire admin overlay - both tabs, the close button, everything -
+   is dimmed and unclickable except the progress bar itself. This is
+   separate from .panelLocked (which flags a TAB another admin is
+   currently editing) - this one is local, applies regardless of which
+   tab is open, and always clears itself when the in-flight call
+   finishes (success, failure, or network error alike - see the
+   finally blocks around every setAdminBusy(true) call). Prevents the
+   exact "tapped delete, tapped it again before the first request
+   landed" / "switched tabs mid-save" class of bug, and gives a clear,
+   consistent "something is happening, wait" signal instead of a
+   single button silently relabeling itself. */
+.adminOverlayBusy .help-inner>*:not(#adminProgress){pointer-events:none;opacity:.55}
+
 .empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
 /* Same red-flag treatment as .selectError, applied to the whole card
    instead of just the dropdown inside it - a branch employee with no
@@ -246,6 +261,30 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
 .formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .branchMapWrap{margin-top:14px}
+
+/* ---- branch type question (mandatory - drives the saved radius) ----
+   Below the preview map. Each option is a full selectable card (not a
+   bare radio dot + label) since the whole point is to give the admin
+   enough description/examples to pick correctly - a one-line radio
+   label isn't enough context for a judgment call like "mall vs
+   street-access". Tapping anywhere on the card selects it (the whole
+   label wraps the input). */
+.branchTypeGroup{margin-top:14px}
+.branchTypeIntro{font-size:12px;color:var(--muted);line-height:1.6;margin-top:4px}
+.branchTypeCards{display:flex;flex-direction:column;gap:9px;margin-top:9px}
+.branchTypeCard{display:flex;align-items:flex-start;gap:10px;padding:12px 13px;border-radius:14px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:right}
+.branchTypeCard input[type=radio]{width:auto;flex:none;margin:3px 0 0;accent-color:var(--button)}
+.branchTypeCard.selected{border-color:var(--button);background:color-mix(in srgb,var(--button) 9%,var(--bg))}
+.branchTypeBody{flex:1;min-width:0}
+.branchTypeTitle{font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.branchTypeRadius{flex:none;font-size:11px;font-weight:800;color:var(--button);background:color-mix(in srgb,var(--button) 14%,transparent);border-radius:99px;padding:2px 9px}
+.branchTypeDesc{font-size:12.5px;color:var(--text);line-height:1.65;margin-top:4px}
+.branchTypeExamples{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:4px}
+/* Shown only once a branch type was picked, then changed away from -
+   or on a fresh new-branch card that hasn't been touched yet - mirrors
+   .formHint's spot/sizing but in the warning color so "still required"
+   reads as distinct from a routine hint. */
+.branchTypeRequired{min-height:16px;font-size:12px;margin-top:8px;color:var(--warning);font-weight:700}
 .formInlineLabel{display:flex;align-items:center;gap:10px;margin-top:2px}
 .formInlineLabel .formLabel{margin:0;white-space:nowrap;flex:none}
 .formInlineLabel input{flex:1}
@@ -415,6 +454,7 @@ input[readonly]{opacity:.75;cursor:default}
       <button type="button" id="adminEmpTabBtn" class="adminTabBtn active" data-admintab="employees">الموظفون</button>
       <button type="button" id="adminBranchTabBtn" class="adminTabBtn hidden" data-admintab="branches">الفروع</button>
     </div>
+    <div id="adminProgress" class="progress"></div>
     <div class="tabContent">
       <section id="adminEmployeesPanel" class="adminPanel">
         <div id="adminEmpLockBanner" class="lockBanner hidden"></div>
@@ -882,6 +922,20 @@ function renderListError(container,message,retryFn){
   container.appendChild(btn);
 }
 
+// Whole-admin-panel busy lock (see .adminOverlayBusy above for why this
+// is separate from .panelLocked). Reference-counted with a depth
+// counter rather than a plain boolean, so a nested/overlapping pair of
+// calls (e.g. a branch delete kicking off loadAdminBranches() itself)
+// can't have the inner call's `finally` turn the lock off while the
+// outer call is still in flight.
+let adminBusyDepth=0;
+function setAdminBusy(v){
+  adminBusyDepth=Math.max(0,adminBusyDepth+(v?1:-1));
+  const busy=adminBusyDepth>0;
+  document.getElementById("adminOverlay").classList.toggle("adminOverlayBusy",busy);
+  document.getElementById("adminProgress").classList.toggle("show",busy);
+}
+
 // ---- whole-tab edit lock (Employees / Branches) ----
 // Prevents two admins from editing the same tab at once: whoever opens
 // a tab first claims it server-side (adminTabLock action, backend
@@ -1094,6 +1148,7 @@ function normalizedJobTitle(emp){
 async function loadAdminEmployees(){
   const list=document.getElementById("adminEmpList");
   renderListLoading(list);
+  setAdminBusy(true);
   try{
     const r=await api("adminEmployeesList");
     if(!r.success){renderListError(list,r.error||"تعذر التحميل.",loadAdminEmployees);return}
@@ -1105,6 +1160,7 @@ async function loadAdminEmployees(){
     renderAdminEmployees();
     updateAdminSaveBar();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الموظفين.",loadAdminEmployees)}
+  finally{setAdminBusy(false)}
 }
 // The dropdown always includes an explicit "بدون فرع" choice now (value
 // ""), not just as a fallback placeholder for a broken reference - so
@@ -1343,6 +1399,7 @@ async function saveAdminEmployees(){
 
   const btn=document.getElementById("adminEmpSaveBtn");
   btn.disabled=true;btn.textContent="جارٍ الحفظ...";
+  setAdminBusy(true);
   const changes=changedIds.map(id=>{
     const els=empRowEls[id];
     return{chatId:id,name:els.name,jobTitle:els.currentJobTitle(),branchId:els.currentBranchId()};
@@ -1381,6 +1438,7 @@ async function saveAdminEmployees(){
     alert("تعذر الاتصال بالخادم أثناء الحفظ.");
   }finally{
     updateAdminSaveBar();
+    setAdminBusy(false);
   }
 }
 
@@ -1396,6 +1454,7 @@ let branchRowSeq=0;
 async function loadAdminBranches(){
   const list=document.getElementById("adminBranchList");
   renderListLoading(list);
+  setAdminBusy(true);
   try{
     const r=await api("adminBranchesList");
     if(!r.success){renderListError(list,r.error||"تعذر التحميل.",loadAdminBranches);return}
@@ -1417,6 +1476,7 @@ async function loadAdminBranches(){
     if(AdminS.employees.length)renderAdminEmployees();
     renderAdminBranchList();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الفروع.",loadAdminBranches)}
+  finally{setAdminBusy(false)}
 }
 function renderAdminBranchList(){
   const list=document.getElementById("adminBranchList");
@@ -1527,6 +1587,85 @@ function buildBranchRow(b,isNew){
   mapWrap.appendChild(mapBox);
   details.appendChild(mapWrap);
 
+  // ---- branch type question (mandatory - drives the saved radius) ----
+  // Below the preview map, per the requested placement. Not a "radius"
+  // field at all from the admin's point of view - they're never asked
+  // to type a number - just a description of the branch's physical
+  // access, which this then maps to a fixed GPS check-in radius:
+  //   - inside a mall/shopping center: 80m. GPS reception is
+  //     materially worse inside a large concrete multi-floor building
+  //     (weak/reflected satellite signal), so a tight radius would
+  //     reject real employees standing right at the branch; 80m gives
+  //     enough slack to absorb that without opening the geofence up to
+  //     "anywhere in the mall".
+  //   - outdoor / independent street entrance: 50m. Outdoor GPS
+  //     reception is normally accurate enough that a tighter radius
+  //     doesn't cost real check-ins, and keeps the geofence meaningfully
+  //     tied to the actual storefront rather than half the block.
+  // Mandatory: saveBtn stays disabled (see updateSaveEnabled) until one
+  // of these is picked, same as the name/coordinates requirement.
+  const typeGroup=document.createElement("div");typeGroup.className="branchTypeGroup";
+  const typeLabel=document.createElement("label");typeLabel.className="formLabel";typeLabel.textContent="🏢 كيف تصف هذا الفرع؟";
+  typeGroup.appendChild(typeLabel);
+  const typeIntro=document.createElement("div");typeIntro.className="branchTypeIntro";
+  typeIntro.textContent="اختر الوصف الأقرب لموقع الفرع فعلياً - هذا يحدد تلقائياً نطاق تسجيل الحضور (GPS) المناسب حوله.";
+  typeGroup.appendChild(typeIntro);
+
+  const typeCards=document.createElement("div");typeCards.className="branchTypeCards";
+  const typeRadioName="branchType_"+seq;
+
+  function makeBranchTypeCard(value,radiusMeters,icon,title,desc,examples){
+    const card=document.createElement("label");card.className="branchTypeCard";
+    const input=document.createElement("input");input.type="radio";input.name=typeRadioName;input.value=value;
+    const bodyEl=document.createElement("div");bodyEl.className="branchTypeBody";
+    const titleEl=document.createElement("div");titleEl.className="branchTypeTitle";
+    const titleText=document.createElement("span");titleText.textContent=icon+" "+title;
+    const radiusBadge=document.createElement("span");radiusBadge.className="branchTypeRadius";radiusBadge.textContent="النطاق: "+radiusMeters+" م";
+    titleEl.append(titleText,radiusBadge);
+    const descEl=document.createElement("div");descEl.className="branchTypeDesc";descEl.textContent=desc;
+    const examplesEl=document.createElement("div");examplesEl.className="branchTypeExamples";examplesEl.textContent="مثال: "+examples;
+    bodyEl.append(titleEl,descEl,examplesEl);
+    card.append(input,bodyEl);
+    return{card,input};
+  }
+
+  const BRANCH_TYPE_MALL_RADIUS=80;
+  const BRANCH_TYPE_OUTDOOR_RADIUS=50;
+
+  const mallType=makeBranchTypeCard(
+    "mall",BRANCH_TYPE_MALL_RADIUS,"🏬","داخل مول / مركز تجاري",
+    "الفرع يقع داخل مبنى مول أو مركز تجاري، وليس له باب مستقل يفتح مباشرة على الشارع - الموظف يدخل من البوابة الرئيسية للمول ويمشي عبر الممرات الداخلية للوصول للفرع.",
+    "فرع داخل سيتي ستارز، مول العرب، أو أي محل ضمن مركز تجاري متعدد الطوابق تشترك فيه عشرات المحلات الأخرى."
+  );
+  const outdoorType=makeBranchTypeCard(
+    "outdoor",BRANCH_TYPE_OUTDOOR_RADIUS,"🚶","فرع خارجي بمدخل مباشر على الشارع",
+    "للفرع باب أو مدخل خاص يفتح مباشرة على الشارع أو الرصيف - سواء كان في مبنى مستقل، أو في دور أرضي بمدخل منفصل ضمن مبنى سكني أو تجاري.",
+    "محل على الشارع الرئيسي، فرع بمدخل مستقل في الدور الأرضي، أو كشك/بوث خارجي."
+  );
+  typeCards.append(mallType.card,outdoorType.card);
+  typeGroup.appendChild(typeCards);
+
+  const typeRequired=document.createElement("div");typeRequired.className="branchTypeRequired";
+  typeGroup.appendChild(typeRequired);
+  details.appendChild(typeGroup);
+
+  function selectedBranchType(){
+    if(mallType.input.checked)return"mall";
+    if(outdoorType.input.checked)return"outdoor";
+    return null;
+  }
+  function selectedBranchRadius(){
+    const t=selectedBranchType();
+    if(t==="mall")return BRANCH_TYPE_MALL_RADIUS;
+    if(t==="outdoor")return BRANCH_TYPE_OUTDOOR_RADIUS;
+    return null;
+  }
+  function updateTypeCardStyles(){
+    mallType.card.classList.toggle("selected",mallType.input.checked);
+    outdoorType.card.classList.toggle("selected",outdoorType.input.checked);
+    typeRequired.textContent=selectedBranchType()?"":"⚠️ هذا الاختيار إلزامي لحفظ الفرع.";
+  }
+
   const btnWrap=document.createElement("div");btnWrap.className="action-buttons";
   const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="action";saveBtn.textContent=isNew?"حفظ الفرع":"حفظ التغييرات";
   const cancelBtn=document.createElement("button");cancelBtn.type="button";cancelBtn.className="cancelText";cancelBtn.textContent="إلغاء";
@@ -1540,12 +1679,7 @@ function buildBranchRow(b,isNew){
   let coordsValid=false;
   let extractInFlight=false;
   let extractTimer=null;
-  let original={name:"",lat:"",lng:"",link:""};
-  // Radius has no field of its own (see save() below) - a branch
-  // already on the sheet keeps whatever radius it has (possibly
-  // hand-tuned there directly) untouched by an unrelated name/location
-  // edit here; only a brand-new branch gets the 100m default.
-  const radiusMeters=(b&&b.radiusMeters)||100;
+  let original={name:"",lat:"",lng:"",link:"",type:null};
 
   function ensureMap(lat,lng){
     if(typeof L==="undefined")return;
@@ -1567,10 +1701,10 @@ function buildBranchRow(b,isNew){
   // feedback area but must never leave Save enabled.
   function updateSaveEnabled(){
     const name=nameInput.value.trim();
-    saveBtn.disabled=!(name&&coordsValid&&!extractInFlight);
+    saveBtn.disabled=!(name&&coordsValid&&!extractInFlight&&selectedBranchType());
   }
   function isDirty(){
-    return nameInput.value!==original.name||latInput.value!==original.lat||lngInput.value!==original.lng||linkInput.value!==original.link;
+    return nameInput.value!==original.name||latInput.value!==original.lat||lngInput.value!==original.lng||linkInput.value!==original.link||selectedBranchType()!==original.type;
   }
   function updateLinkClearBtn(){
     linkClearBtn.classList.toggle("hidden",!linkInput.value);
@@ -1587,7 +1721,18 @@ function buildBranchRow(b,isNew){
     extractInFlight=false;
     clearTimeout(extractTimer);
     updateLinkClearBtn();
-    original={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value};
+    // The sheet has no dedicated "type" column - just RadiusMeters - so
+    // an existing branch can only be preselected when its saved radius
+    // exactly matches one of the two fixed values below. Anything else
+    // (an old hand-tuned radius, or the previous 100m new-branch
+    // default) is left unselected on purpose: the admin has to
+    // consciously pick a type rather than have one silently guessed for
+    // them, and doing so will standardize this branch onto 80/50 next
+    // save - which is the intended migration path, not a bug.
+    mallType.input.checked=!!b&&b.radiusMeters===BRANCH_TYPE_MALL_RADIUS;
+    outdoorType.input.checked=!!b&&b.radiusMeters===BRANCH_TYPE_OUTDOOR_RADIUS;
+    updateTypeCardStyles();
+    original={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value,type:selectedBranchType()};
     updateSaveEnabled();
   }
   fillFromBranch();
@@ -1660,9 +1805,11 @@ function buildBranchRow(b,isNew){
     const name=nameInput.value.trim();
     const lat=latInput.value.trim();
     const lng=lngInput.value.trim();
-    if(!name||!lat||!lng)return; // Save stays disabled in this case - defensive only
+    const radiusMeters=selectedBranchRadius();
+    if(!name||!lat||!lng||!radiusMeters)return; // Save stays disabled in this case - defensive only
     if(!AdminS.lock.branches.editable)return; // belt-and-suspenders - see saveAdminEmployees()'s matching guard
     saveBtn.disabled=true;const prevText=saveBtn.textContent;saveBtn.textContent="جارٍ الحفظ...";
+    setAdminBusy(true);
     try{
       const r=await api("adminBranchesSave",{branchId:b?b.id:"",name:name,lat:lat,lng:lng,radiusMeters:radiusMeters});
       if(!r.success){alert(r.error||"تعذر حفظ الفرع.");return}
@@ -1673,11 +1820,14 @@ function buildBranchRow(b,isNew){
     }finally{
       saveBtn.textContent=prevText;
       updateSaveEnabled();
+      setAdminBusy(false);
     }
   }
 
   nameInput.addEventListener("input",updateSaveEnabled);
   linkInput.addEventListener("input",scheduleExtract);
+  mallType.input.addEventListener("change",()=>{updateTypeCardStyles();updateSaveEnabled()});
+  outdoorType.input.addEventListener("change",()=>{updateTypeCardStyles();updateSaveEnabled()});
   linkClearBtn.onclick=()=>{
     linkInput.value="";
     linkInput.focus();
@@ -1755,14 +1905,28 @@ async function deleteAdminBranch(b,rowCtx){
     );
   }
   if(!ok)return;
+  setAdminBusy(true);
   try{
     const r=await api("adminBranchesDelete",{branchId:b.id});
     if(!r.success){alert(r.error||"تعذر حذف الفرع.");return}
     if(rowCtx&&openBranchDetails===rowCtx.details){openBranchDetails=null;openBranchIsDirty=null;openBranchDiscard=null}
+    // Drop it from the in-memory list and the DOM right away, instead of
+    // waiting on the loadAdminBranches() round trip below to notice it's
+    // gone - the backend has already confirmed the delete at this point,
+    // so there's no reason the admin should still see the row sitting
+    // there for however long that request takes (or, if a server-side
+    // cache is ever slow to catch up - see invalidateBranchCache_() in
+    // 10_Branches.gs - for however long THAT takes). loadAdminBranches()
+    // right after is still the source of truth and will correct anything
+    // this optimistic removal got wrong.
+    AdminS.branchList=AdminS.branchList.filter(x=>x.id!==b.id);
+    if(rowCtx&&rowCtx.row&&rowCtx.row.isConnected)rowCtx.row.remove();
     await loadAdminBranches();
     if(!Object.values(AdminS.dirty).some(Boolean))loadAdminEmployees();
   }catch(e){
     alert("تعذر الاتصال بالخادم أثناء حذف الفرع.");
+  }finally{
+    setAdminBusy(false);
   }
 }
 
