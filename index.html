@@ -29,15 +29,6 @@ h2{margin:0;font-size:clamp(21px,6.5vw,27px);font-weight:850}
 .row:last-child{border-bottom:0}
 .rowText{flex:1;min-width:0}
 .rowLabel{font-size:12px;color:var(--muted);margin-bottom:2px}
-/* For a meta line whose content is inherently LTR (a Telegram
-   @username plus a Latin/digit employee code) sitting inside an RTL
-   page. Without this, the page's RTL base direction can reorder the
-   neutral characters ("@", "·") relative to the two Latin runs on
-   either side of them - e.g. the "@" drifting to the end of the line
-   instead of staying immediately before the username. Forcing
-   direction:ltr keeps "@username · CODE" in its actual reading order;
-   text-align:right keeps it flush with the rest of the right-aligned
-   card instead of jumping to the left edge. */
 .metaLtr{direction:ltr;text-align:right}
 .rowValue{font-size:14px;font-weight:800;line-height:1.4;overflow-wrap:anywhere}
 .rowIcon{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:color-mix(in srgb,var(--button) 12%,transparent)}
@@ -54,9 +45,6 @@ button{width:100%;min-height:58px;margin-top:12px;padding:14px 18px;border:0;bor
 button:disabled{opacity:.5}
 button.danger{background:var(--danger)}
 button.secondary,.back{color:var(--text);background:transparent;border:0;font-size:14px;min-height:42px}
-/* Cancel/close actions: a red text link, never a full button, so the
-   real (blue) button that continues the action stays the visually
-   dominant choice. */
 .cancelText{color:var(--danger);background:transparent;border:0;font-size:14px;min-height:42px;font-weight:700}
 .btnIcon{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:13px;background:rgba(255,255,255,.22)}
 
@@ -86,14 +74,7 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .action.checkout{background:var(--danger)}
 .hidden{display:none!important}
 
-/* ===========================================================
-   HEADER ACTION BUTTONS (admin-management + help)
-   Stacked vertically in the header's end column - the admin-only
-   management button sits above the help button, per the requested
-   layout. Both share the same pill styling.
-   =========================================================== */
 .header-actions{grid-column:3;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-
 .help-fab{flex:none;width:auto;min-height:0;margin:0;padding:9px 14px 9px 12px;border-radius:99px;display:flex;align-items:center;gap:7px;background:var(--surface);color:var(--button);border:1px solid var(--border);box-shadow:0 6px 18px rgba(0,0,0,.10);font-size:13px;font-weight:800;white-space:nowrap}
 .help-fab svg{width:18px;height:18px;flex:none}
 .help-fab:active{transform:scale(.95)}
@@ -121,13 +102,6 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
 .faqItem[open] summary:after{content:"−"}
 .faqAnswer{margin-top:9px;color:var(--muted);font-size:13.5px;line-height:1.8}
 
-/* ===========================================================
-   COMPACT-HEIGHT MODE
-   Kicks in on short viewports (e.g. Huawei Mate 9 ≈ 640px CSS
-   height, and shorter). Tightens spacing so every screen fits
-   without scrolling instead of shrinking font sizes, which would
-   hurt readability. Tall phones are completely unaffected.
-   =========================================================== */
 @media (max-height:700px){
   .app{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
   .header{padding:4px 2px 10px}
@@ -167,68 +141,20 @@ button.secondary,.back{color:var(--text);background:transparent;border:0;font-si
   .message{font-size:13px}
 }
 
-/* ===========================================================
-   ADMIN MANAGEMENT PANEL (employees + branches)
-   Reuses the help-overlay/tabs shell as-is. .adminTabBtn shares the
-   .tab ruleset below (extended selectors) rather than duplicating it,
-   but deliberately isn't just named ".tab" - the page's one existing
-   ".tab" click-binder (bottom of the script) queries that class
-   globally, and would wrongly attach itself to these buttons too if
-   they carried it.
-   =========================================================== */
 input[type=text],select{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:14px}
 input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--button) 40%,transparent);outline-offset:1px}
-
-/* Strong visual flag for a branch <select> that's showing the
-   "⚠️ بدون فرع" placeholder because the employee's stored branch no
-   longer exists (see branchSelectOptions()) - a red border + tinted
-   background so it reads as broken, not just an ordinary empty field,
-   and can't be mistaken for the app having already handled it. */
 .selectError{border:1.5px solid var(--danger)!important;background:color-mix(in srgb,var(--danger) 8%,var(--bg))!important}
 .selectError:focus{outline-color:color-mix(in srgb,var(--danger) 45%,transparent)}
-
-/* Custom select arrow: the native one is removed (appearance:none) and
-   replaced with a bold CSS chevron drawn on .selectWrap::after, so it
-   can use var(--text) (native arrows can't follow the app's theme) and
-   be made thicker/more visible on request. Sits on the left (the "end"
-   side in this RTL layout) with room between it and the select's own
-   left padding so it never crowds the box's edge. */
 .selectWrap{position:relative}
 .selectWrap select{appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-left:38px}
 .selectWrap::after{content:"";position:absolute;left:17px;top:50%;width:9px;height:9px;border-right:3px solid var(--text);border-bottom:3px solid var(--text);transform:translateY(-65%) rotate(45deg);pointer-events:none}
 
 .adminPanel{display:flex;flex-direction:column}
 .lockBanner{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--warning) 14%,transparent);color:var(--text);text-align:right;line-height:1.6;font-size:13px;font-weight:750}
-/* Everything in a locked tab stays visible (read-only browsing) except
-   the banner itself, which needs to stay interactive/undimmed so its
-   text is legible. Direct children only, since adminEmpList/.steps/
-   .adminSaveBar (or branchAddBtn/adminBranchList on the branches side)
-   are all direct children of the section - see openAdminPanel()'s
-   comment block for the full lock lifecycle. */
 .adminPanel.panelLocked>*:not(.lockBanner){pointer-events:none;opacity:.55}
 .adminList{padding:2px 0}
 
-/* Whole-panel busy lock: while ANY admin write is in flight (branch
-   add/edit/delete, employee save, or either list (re)loading), the
-   entire admin overlay - both tabs, the close button, everything -
-   is dimmed and unclickable except the progress bar itself. This is
-   separate from .panelLocked (which flags a TAB another admin is
-   currently editing) - this one is local, applies regardless of which
-   tab is open, and always clears itself when the in-flight call
-   finishes (success, failure, or network error alike - see the
-   finally blocks around every setAdminBusy(true) call). Prevents the
-   exact "tapped delete, tapped it again before the first request
-   landed" / "switched tabs mid-save" class of bug, and gives a clear,
-   consistent "something is happening, wait" signal instead of a
-   single button silently relabeling itself. */
-.adminOverlayBusy .help-inner>*:not(#adminProgress){pointer-events:none;opacity:.55}
-
 .empRow{background:color-mix(in srgb,var(--muted) 6%,var(--surface));border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:8px 0}
-/* Same red-flag treatment as .selectError, applied to the whole card
-   instead of just the dropdown inside it - a branch employee with no
-   matching branch (deliberately unassigned, or a broken reference from
-   a deleted branch) reads as needing attention even while collapsed,
-   not just once the row is expanded down to the select. */
 .empRow.empRowError{border:1.5px solid var(--danger);background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
 .empRowSummary{display:flex;align-items:center;gap:10px;cursor:pointer}
 .empStatusDot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
@@ -261,39 +187,11 @@ input[type=text]:focus,select:focus{outline:2px solid color-mix(in srgb,var(--bu
 .formHint{min-height:16px;font-size:12px;margin-top:6px;color:var(--muted)}
 .formRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .branchMapWrap{margin-top:14px}
-
-/* ---- branch type question (mandatory - drives the saved radius) ----
-   Below the preview map. Each option is a full selectable card (not a
-   bare radio dot + label) since the whole point is to give the admin
-   enough description/examples to pick correctly - a one-line radio
-   label isn't enough context for a judgment call like "mall vs
-   street-access". Tapping anywhere on the card selects it (the whole
-   label wraps the input). */
-.branchTypeGroup{margin-top:14px}
-.branchTypeIntro{font-size:12px;color:var(--muted);line-height:1.6;margin-top:4px}
-.branchTypeCards{display:flex;flex-direction:column;gap:9px;margin-top:9px}
-.branchTypeCard{display:flex;align-items:flex-start;gap:10px;padding:12px 13px;border-radius:14px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:right}
-.branchTypeCard input[type=radio]{width:auto;flex:none;margin:3px 0 0;accent-color:var(--button)}
-.branchTypeCard.selected{border-color:var(--button);background:color-mix(in srgb,var(--button) 9%,var(--bg))}
-.branchTypeBody{flex:1;min-width:0}
-.branchTypeTitle{font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.branchTypeRadius{flex:none;font-size:11px;font-weight:800;color:var(--button);background:color-mix(in srgb,var(--button) 14%,transparent);border-radius:99px;padding:2px 9px}
-.branchTypeDesc{font-size:12.5px;color:var(--text);line-height:1.65;margin-top:4px}
-.branchTypeExamples{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:4px}
-/* Shown only once a branch type was picked, then changed away from -
-   or on a fresh new-branch card that hasn't been touched yet - mirrors
-   .formHint's spot/sizing but in the warning color so "still required"
-   reads as distinct from a routine hint. */
-.branchTypeRequired{min-height:16px;font-size:12px;margin-top:8px;color:var(--warning);font-weight:700}
 .formInlineLabel{display:flex;align-items:center;gap:10px;margin-top:2px}
 .formInlineLabel .formLabel{margin:0;white-space:nowrap;flex:none}
 .formInlineLabel input{flex:1}
 input[readonly]{opacity:.75;cursor:default}
 
-/* Clear (✕) button shown inside a text input once it has a value -
-   e.g. the "paste location link" field. Uses inset-inline-end so it
-   sits on the correct side automatically under the page's RTL
-   direction instead of a hardcoded left/right. */
 .inputClearWrap{position:relative}
 .inputClearWrap input[type=text]{padding-inline-end:38px}
 .inputClearBtn{position:absolute;top:50%;inset-inline-end:6px;transform:translateY(-50%);width:26px;height:26px;min-height:0;margin:0;padding:0;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
@@ -306,25 +204,14 @@ input[readonly]{opacity:.75;cursor:default}
   .branchRowWrap{margin:6px 0;padding:9px 12px}
 }
 
-/* ---- unsaved-changes confirmation modal ---- */
 .unsavedOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
 .unsavedOverlay.hidden{display:none}
 .unsavedBox{background:var(--surface);border-radius:16px;padding:18px 18px 14px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .unsavedMsg{color:var(--text);font-size:14px;line-height:1.7;text-align:right;margin-bottom:4px}
-/* The plain "unsaved changes" prompt needs to read as clearly more
-   prominent than the Continue/Discard buttons beneath it - bold and
-   a size step above the main button's text (clamp(16px,4.5vw,18px)).
-   Scoped to the id (not the shared .unsavedMsg class) so the danger
-   modal's message, which reuses that class, is unaffected. */
 #unsavedMsg{font-weight:800;font-size:clamp(18px,5vw,20px)}
 .unsavedActions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .unsavedActions button{margin-top:0}
 
-/* Strong/danger confirmation modal - a visually distinct variant of
-   the unsaved-changes box above, used for actions that need to stop
-   the admin and get real attention (e.g. deleting a branch that
-   still has employees assigned to it) rather than a dismissible
-   native confirm() that's easy to click through on autopilot. */
 .dangerBox{border:2px solid var(--danger);box-shadow:0 12px 40px rgba(217,83,79,.28)}
 .dangerHead{display:flex;align-items:center;gap:9px;margin-bottom:6px}
 .dangerHeadIcon{font-size:23px;flex:none;line-height:1}
@@ -336,7 +223,6 @@ input[readonly]{opacity:.75;cursor:default}
 <main class="app">
 <header class="header">
   <div class="headerText">
-    <!-- Change this text whenever you want to change the business name shown to employees. -->
     <div id="businessName" class="business-name">زيارات المبيعات</div>
     <div id="welcome" class="user-name">جاري التحقق...</div>
   </div>
@@ -454,7 +340,6 @@ input[readonly]{opacity:.75;cursor:default}
       <button type="button" id="adminEmpTabBtn" class="adminTabBtn active" data-admintab="employees">الموظفون</button>
       <button type="button" id="adminBranchTabBtn" class="adminTabBtn hidden" data-admintab="branches">الفروع</button>
     </div>
-    <div id="adminProgress" class="progress"></div>
     <div class="tabContent">
       <section id="adminEmployeesPanel" class="adminPanel">
         <div id="adminEmpLockBanner" class="lockBanner hidden"></div>
@@ -496,39 +381,16 @@ input[readonly]{opacity:.75;cursor:default}
 
 <script>
 const tg=window.Telegram&&window.Telegram.WebApp;
-// =========================
-// EDITABLE BUSINESS NAME
-// =========================
-// Shown before the employee's status is known (brief "جاري التحقق..."
-// moment) and as the free-roam fallback. Once /status resolves,
-// UI_TEXT[S.locationMode].businessName overrides this - see doRefresh().
 const BUSINESS_NAME = "زيارات المبيعات";
 document.getElementById("businessName").textContent = BUSINESS_NAME;
-
-// =========================
-// EDITABLE VERSION NUMBER
-// =========================
-// Bump this manually whenever you redeploy index.html. Shows quietly
-// in the footer next to the status text, so you can tell at a glance
-// (or ask an employee to tell you) which build is actually live.
 const APP_VERSION = "Penguin Sales Tracker v1.1 ";
 document.getElementById("footerVersion").textContent = " · " + APP_VERSION;
 
 const API_URL="https://script.google.com/macros/s/AKfycbzS1rCL5jtyr5uZd_KRY0ScdXZ4cUUmOUsuyWEpWSL1X13048cjnSQpd5lOKpuN2w/exec";
-// Optional fallback. Prefer result.supervisors from the backend: [{name:"Ahmed",username:"ahmed"}].
 const DEFAULT_SUPERVISORS=[];
 const ARABIC_MONTHS=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const ERR={NOT_MEMBER:"عذراً، أنت غير موجود في المجموعة الأساسية ولا يمكنك استخدام النظام.",NOT_REGISTERED:"حسابك غير مسجل في النظام.",INACTIVE:"حسابك موجود في النظام ولكنه غير مفعل حالياً.",NO_USERNAME:"يجب أن يكون لديك اسم مستخدم في تيليجرام أولاً.",SERVICE_DOWN:"الخدمة متوقفة مؤقتاً، حاول مرة أخرى لاحقاً.",BACKEND_CONNECTION_FAILED:"تعذر الاتصال بخدمة النظام.",INVALID_ACTION:"العملية المطلوبة غير صحيحة.",INVALID_REQUEST:"الطلب غير صحيح.",INVALID_TELEGRAM_DATA:"تعذر التحقق من حساب تيليجرام.",SERVER_ERROR:"حدث خطأ في النظام. حاول مرة أخرى."};
 
-// =========================
-// MODE-AWARE UI TEXT
-// =========================
-// Everything that differs between a free-roam employee (sales-visit
-// language) and a geofenced employee (attendance language). Driven by
-// S.locationMode, which comes back from the backend's /status call
-// (getMiniAppStatus in 04_Attendance.gs) once the employee is known -
-// defaults to "freeRoam" until then. The map/reverse-geocode preview
-// itself is unaffected either way - only the surrounding text changes.
 const UI_TEXT={
   freeRoam:{
     businessName:"زيارات المبيعات",
@@ -580,18 +442,8 @@ const UI_TEXT={
 function V(){return UI_TEXT[S.locationMode==="geofence"?"geofence":"freeRoam"]}
 
 const S={busy:false,action:null,name:"الموظف",isLeader:false,geofenceModuleAvailable:false,locationMode:"freeRoam",hasBranch:true,coords:null,coordsAt:0,address:null,clockTimer:null,lastSubmit:null,justRegistered:false,initTime:Date.now()};
-// True only when the backend explicitly says a geofenced employee has
-// no branch assigned yet (r.hasBranch===false in the /status response -
-// 04_Attendance.gs / getMiniAppStatus). Missing/undefined is treated as
-// assigned, so this stays backward-compatible until the backend field
-// is added. Free-roam employees are never gated by this.
 function branchUnassigned(){return S.locationMode==="geofence"&&S.hasBranch===false}
 
-// =========================
-// EDITABLE HELP CENTER CONTENT
-// Edit the questions/answers below any time — the help screen
-// (top-left "مساعدة" button) renders straight from this list.
-// =========================
 const HELP_CONTENT={
   employee:[
     {q:"ليس لدي اسم مستخدم في تيليجرام، كيف أنشئه؟",a:"افتح إعدادات تيليجرام ← الملف الشخصي (Edit Profile) ← Username، ثم اختر اسماً فريداً واحفظه، وبعدها اضغط \"تحقق مرة أخرى\"."},
@@ -617,15 +469,11 @@ const HELP_CONTENT={
 };
 let helpTab="employee";
 
-// ---- small formatting helpers ----
 function formatTime(d){let h=d.getHours();const m=String(d.getMinutes()).padStart(2,"0");const suffix=h>=12?"م":"ص";h=h%12;if(h===0)h=12;return String(h).padStart(2,"0")+":"+m+" "+suffix}
 function formatDate(d){return d.getDate()+" "+ARABIC_MONTHS[d.getMonth()]+" "+d.getFullYear()}
 function startClock(){stopClock();const tick=()=>{const el=document.getElementById("confirmTime");if(el)el.textContent=formatTime(new Date())};tick();S.clockTimer=setInterval(tick,1000)}
 function stopClock(){if(S.clockTimer){clearInterval(S.clockTimer);S.clockTimer=null}}
 
-// ---- map + reverse geocoding ----
-// Unchanged for both employee types - the map preview stays as-is
-// even for geofenced employees, per the request to keep it.
 let confirmMap=null,confirmMarker=null,geocodeAbort=null;
 function ensureConfirmMap(lat,lng){
   if(typeof L==="undefined")return;
@@ -642,7 +490,7 @@ function ensureConfirmMap(lat,lng){
 }
 const geocodeCache = {};
 async function reverseGeocode(lat,lng){
-  const cacheKey = lat.toFixed(4) + "," + lng.toFixed(4); // Cache at ~11m precision
+  const cacheKey = lat.toFixed(4) + "," + lng.toFixed(4);
   if (geocodeCache[cacheKey]) return geocodeCache[cacheKey];
   try{
     if(geocodeAbort)geocodeAbort.abort();
@@ -662,8 +510,17 @@ async function reverseGeocode(lat,lng){
     return addr;
   }catch(e){return null}
 }
+
 async function loadConfirmLocationPreview(action){
-  if(!navigator.geolocation){document.getElementById("confirmAddress").textContent="الجهاز لا يدعم تحديد الموقع.";return}
+  const btn = document.getElementById("confirmBtn");
+  const prog = document.getElementById("confirmProgress");
+
+  if(!navigator.geolocation){
+    document.getElementById("confirmAddress").textContent="الجهاز لا يدعم تحديد الموقع.";
+    btn.disabled = false;
+    prog.classList.remove("show");
+    return;
+  }
   try{
     const p=await getLocation();
     if(S.action!==action)return; // user navigated away before this resolved
@@ -671,6 +528,11 @@ async function loadConfirmLocationPreview(action){
     S.coordsAt=Date.now();
     ensureConfirmMap(S.coords.lat,S.coords.lng);
     document.getElementById("confirmAddress").textContent="تم تحديد الموقع";
+    
+    // Unlock button once location is fetched successfully
+    btn.disabled = false;
+    prog.classList.remove("show");
+
     const addr=await reverseGeocode(S.coords.lat,S.coords.lng);
     if(S.action!==action)return;
     if(addr){S.address=addr;const el=document.getElementById("confirmAddress");if(el)el.textContent=addr}
@@ -678,6 +540,10 @@ async function loadConfirmLocationPreview(action){
     if(S.action!==action)return;
     document.getElementById("confirmAddress").textContent="تعذر تحديد الموقع، سيُعاد تحديده عند التأكيد.";
     const sk=document.getElementById("confirmMapSkeleton");if(sk)sk.textContent="⚠️ تعذر عرض الخريطة";
+    
+    // Unlock button anyway so they can attempt to submit
+    btn.disabled = false;
+    prog.classList.remove("show");
   }
 }
 
@@ -730,10 +596,6 @@ function renderHome(){
   clearFeedback();
   const v=V();
 
-  // Unassigned-branch employees: keep them on the home screen (so the
-  // help button / admin FAB etc. stay reachable) but hide check-in/out
-  // entirely rather than letting them hit the backend and fail there -
-  // saves the round trip and matches server-side rejection anyway.
   if(branchUnassigned()){
     home("⏳","بانتظار تعيين الفرع","لم يتم تعيين فرع لك بعد. سيتم تفعيل أزرار الحضور والانصراف تلقائياً فور تعيين فرعك من قبل الإدارة.","warningIcon");
     document.getElementById("actionButtons").classList.add("hidden");
@@ -770,6 +632,7 @@ function renderError(msg){
   retry.id="temporaryRetry";
   document.getElementById("home").appendChild(retry);
 }
+
 function openConfirm(action){
   S.action=action;S.coords=null;S.coordsAt=0;S.address=null;
   screen("confirm");
@@ -791,15 +654,31 @@ function openConfirm(action){
   document.getElementById("confirmMapSkeleton").textContent="📍 جارٍ تحميل الخريطة...";
 
   document.getElementById("footerStatus").textContent="مراجعة العملية";
+  
+  // Lock proceed button while fetching location
+  btn.disabled = true;
+  document.getElementById("confirmProgress").classList.add("show");
+
   startClock();
   loadConfirmLocationPreview(action);
 }
-function confirmAction(action){if(S.busy)return;if(branchUnassigned())return;openConfirm(action)}
+
+function confirmAction(action){
+  if(S.busy)return;
+  if(branchUnassigned())return;
+  if(S.lastSubmit && (Date.now() - S.lastSubmit.time.getTime() < 15 * 60 * 1000)){
+    alert("لقد قمت بالتسجيل قبل قليل. الرجاء الانتظار لمدة 15 دقيقة بين كل عملية تسجيل.");
+    return;
+  }
+  openConfirm(action);
+}
+
 function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}))}
+
 async function postAction(){
   if(S.busy)return;
   if(Date.now() - S.initTime > 55 * 60 * 1000) {
-    alert("انتهت جلسة العمل بسبب عدم النشاط لفترة طويلة. سيتم إغلاق التطبيق الآن، يرجى فتحه مرة أخرى.");
+    alert("التطبيق مفتوح في الخلفية لفترة طويلة، يرجى إعادة تشغيل التطبيق (Restart the app).");
     if(tg)tg.close();
     return;
   }
@@ -828,6 +707,7 @@ async function postAction(){
     else{console.error(e);renderError(e.message||ERR.SERVER_ERROR)}
   }finally{busy(false)}
 }
+
 function showResult(action,r){
   stopClock();
   screen("result");
@@ -862,50 +742,28 @@ async function doRefresh(){home("⏳","جاري الاتصال","جاري الت
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
-// Dev-only: open the page with ?previewSuccess=1 to preview the registration-success overlay without re-registering. Safe to remove any time.
 if(new URLSearchParams(location.search).get("previewSuccess")==="1"){renderHome();showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}
 else if(initTelegram())refresh();
 
-// ---- admin management panel (employees + branches) ----
-// Gated behind S.isLeader client-side purely for UI convenience -
-// every action this panel calls (adminEmployeesList/Save,
-// adminBranchesList/Save, adminExtractCoords) re-checks Telegram
-// group-admin status server-side via requireMiniAppLeader_()
-// (04_Attendance.gs), so hiding the button here is not the actual
-// security boundary.
 const AdminS={employees:[],original:{},dirty:{},branches:[],branchList:[],loadedBranches:false,
-  // Whole-tab edit lock (see acquireOrRefreshLock() below) - independent
-  // per tab, since one admin editing Employees shouldn't block another
-  // admin working on Branches at the same time.
   lock:{employees:{editable:true,ownerName:null},branches:{editable:true,ownerName:null}}
 };
 let empRowEls={};
-let openEmpDetails=null; // the one expanded row's details element, if any - see toggleDetails below
+let openEmpDetails=null;
 function closeOpenEmpRow(){
   openEmpDetails&&openEmpDetails.classList.add("hidden");
   openEmpDetails=null;
 }
 
-// Branches tab: every row owns its own inline expandable edit card
-// (see buildBranchRow below) instead of all rows sharing one form.
-// Only one row's details stay open at a time - these three track
-// whichever one that currently is, so branchFormDirty() and the
-// unsaved-changes guards can query "the open row" without caring
-// which branch it belongs to.
 let openBranchDetails=null;
-let openBranchIsDirty=null; // fn: () => bool, bound to the open row
-let openBranchDiscard=null; // fn: () => void, reverts/removes the open row
+let openBranchIsDirty=null;
+let openBranchDiscard=null;
 function closeOpenBranchRow(){
   openBranchDiscard&&openBranchDiscard();
   openBranchDetails&&openBranchDetails.classList.add("hidden");
   openBranchDetails=null;openBranchIsDirty=null;openBranchDiscard=null;
 }
 
-// Shared loading/error rendering for both admin lists - a clock emoji
-// while a load is in flight, and (on failure) the error text plus a
-// retry button that just re-runs whichever load function is passed in,
-// so a flaky connection never leaves the admin stuck looking at a bare
-// error with no way forward but closing the panel.
 function renderListLoading(container){
   container.innerHTML="";
   const p=document.createElement("div");p.className="message";p.textContent="🕐 جارٍ التحميل...";
@@ -922,34 +780,6 @@ function renderListError(container,message,retryFn){
   container.appendChild(btn);
 }
 
-// Whole-admin-panel busy lock (see .adminOverlayBusy above for why this
-// is separate from .panelLocked). Reference-counted with a depth
-// counter rather than a plain boolean, so a nested/overlapping pair of
-// calls (e.g. a branch delete kicking off loadAdminBranches() itself)
-// can't have the inner call's `finally` turn the lock off while the
-// outer call is still in flight.
-let adminBusyDepth=0;
-function setAdminBusy(v){
-  adminBusyDepth=Math.max(0,adminBusyDepth+(v?1:-1));
-  const busy=adminBusyDepth>0;
-  document.getElementById("adminOverlay").classList.toggle("adminOverlayBusy",busy);
-  document.getElementById("adminProgress").classList.toggle("show",busy);
-}
-
-// ---- whole-tab edit lock (Employees / Branches) ----
-// Prevents two admins from editing the same tab at once: whoever opens
-// a tab first claims it server-side (adminTabLock action, backend
-// TTL-based - see the comment above AdminS's `lock` field). Every
-// other admin sees that tab wrapped in the same read-only shell used
-// elsewhere for a broken reference (.panelLocked, mirroring
-// .selectError/.empRowError's "visible but flagged" treatment), with a
-// banner naming who's editing. Polling both refreshes the holder's own
-// lock so it doesn't expire mid-edit, and lets a blocked admin regain
-// editing automatically the moment it's freed - see
-// acquireOrRefreshLock(). If an admin just vanishes (closed the app,
-// lost connection) instead of switching tabs or closing the panel
-// normally, nothing here can release their lock for them - the
-// backend TTL is what eventually frees it, not this polling.
 const ADMIN_LOCK_POLL_MS=20000;
 let adminLockPollTimer=null;
 function activeAdminTab(){
@@ -960,8 +790,6 @@ async function acquireOrRefreshLock(tab){
     const r=await api("adminTabLock",{tab});
     if(r&&r.success)AdminS.lock[tab]={editable:!!r.editable,ownerName:r.ownerName||null};
   }catch(e){
-    // A single failed poll (network hiccup) shouldn't flip an editable
-    // admin to locked - keep the last known state and retry next tick.
   }
   applyLockUI(tab);
 }
@@ -984,10 +812,6 @@ function startLockPolling(tab){
 function stopLockPolling(){
   if(adminLockPollTimer){clearInterval(adminLockPollTimer);adminLockPollTimer=null}
 }
-// Best-effort only, never awaited by a caller - releasing a lock a
-// moment early just lets another admin start sooner; failing to
-// release it (closed tab, lost connection) is already covered by the
-// backend TTL, so nothing here needs to block the UI on this call.
 function releaseLockBestEffort(tab){
   if(!tab)return;
   api("adminTabUnlock",{tab}).catch(()=>{});
@@ -1002,13 +826,6 @@ function openAdminPanel(){
   startLockPolling("employees");
 }
 
-// ---- unsaved-changes confirmation (shared by the employees list and
-// the branch form - see call sites below) ----
-// A styled stand-in for confirm(), since the ask is specifically a
-// "discard changes / keep editing" choice rather than a generic
-// OK/Cancel box. Only one can be open at a time, which matches how
-// it's used here: it always blocks on the previous choice before
-// anything else can trigger the modal again.
 let unsavedConfirmResolve=null;
 function confirmUnsaved(message){
   return new Promise(resolve=>{
@@ -1028,14 +845,6 @@ document.getElementById("unsavedDiscardBtn").onclick=()=>{
   if(resolve)resolve(true);
 };
 
-// ---- strong/danger confirmation (e.g. deleting a branch that still
-// has employees assigned to it) - same show/resolve pattern as
-// confirmUnsaved above, but its own overlay+resolve pair so a danger
-// confirm and an unsaved-changes confirm can never collide, and its
-// own visual treatment (red border, 🚨 header) so it reads as
-// materially more serious than a routine "are you sure?". Any
-// affected-names detail is the caller's job to weave into `message`
-// itself (see deleteAdminBranch) rather than a separate block here.
 let dangerConfirmResolve=null;
 function confirmDanger(title,message,confirmLabel){
   return new Promise(resolve=>{
@@ -1057,11 +866,6 @@ document.getElementById("dangerCancelBtn").onclick=()=>{
   if(resolve)resolve(false);
 };
 
-// Whether the currently-open branch row (if any) holds edits that
-// haven't been saved yet. Each row tracks its own dirty state (see
-// buildBranchRow below); branchFormDirty() just asks whichever one is
-// currently open, mirroring how AdminS.dirty tracks the employees
-// list - just for at most one open row instead of a set of them.
 function branchFormDirty(){
   return !!(openBranchIsDirty&&openBranchIsDirty());
 }
@@ -1080,11 +884,6 @@ async function closeAdminPanel(){
   releaseLockBestEffort(activeAdminTab());
   stopLockPolling();
 }
-// Wraps setAdminTab for the tab buttons themselves: switching away from
-// a tab that has unsaved edits needs the same confirmation as closing
-// the whole panel. setAdminTab stays a plain, confirmation-free render
-// step since it's also called on initial open and after loading
-// branches, where nothing needs to be discarded.
 async function switchAdminTab(tab){
   const curTab=document.getElementById("adminEmpTabBtn").classList.contains("active")?"employees":"branches";
   if(curTab===tab){setAdminTab(tab);return}
@@ -1095,11 +894,6 @@ async function switchAdminTab(tab){
   if(curTab==="branches"&&branchFormDirty()){
     if(!await confirmUnsaved("لديك تغييرات غير محفوظة في نموذج الفرع."))return;
   }
-  // Moving away from either tab always collapses whatever card was
-  // open there, whether or not it held edits - an open-but-unedited
-  // card shouldn't just sit there expanded once you've navigated
-  // elsewhere. Employee rows never discard values on collapse (unlike
-  // branch rows), so this is purely visual - any dirty dot stays put.
   if(curTab==="employees"&&openEmpDetails)closeOpenEmpRow();
   if(curTab==="branches"&&openBranchDetails)closeOpenBranchRow();
   setAdminTab(tab);
@@ -1114,30 +908,6 @@ function setAdminTab(tab){
   if(tab==="branches"&&!AdminS.loadedBranches)loadAdminBranches();
 }
 
-// ---- employees tab ----
-// Job title is now a fixed choice - "موظف فرع" (branch employee, needs
-// a branch picked) or "مندوب مبيعات ميداني" (field sales rep, free-roam)
-// - rather than free text, so it can drive the branch dropdown's
-// visibility directly. This is also the real backend routing signal
-// now (isEmployeeGeofenced_, 11_Location_Core.gs) - so
-// normalizedJobTitle() must agree with it: trust the employee's actual
-// stored JOB_TITLE first when it's already one of the two canonical
-// values (this is what the backend itself goes by), and only fall
-// back to inferring from BranchID for a row that hasn't been migrated
-// yet - blank, or legacy free text from before this scheme existed
-// (old suggestions like "كاشير"/"أمين مخزن"). Getting this backwards -
-// re-deriving from BranchID even when a real JOB_TITLE is already on
-// file - would make the admin panel disagree with what the backend
-// actually does (e.g. after a branch deletion sets BranchID to "none":
-// the backend keeps the employee geofenced because JOB_TITLE still
-// says "موظف فرع", but re-deriving here would still show that
-// correctly too only by coincidence, since "none" is non-empty - the
-// two need to be reading the same signal, not agreeing by accident).
-// AdminS.original is seeded with this same normalized value so a row
-// that hasn't been touched never shows as dirty just because its
-// stored text doesn't literally match one of the two canonical labels
-// - saving any change to that row will naturally clean the cell over
-// to one of the two going forward.
 const JOB_TITLE_BRANCH="موظف فرع";
 const JOB_TITLE_FIELD="مندوب مبيعات ميداني";
 function normalizedJobTitle(emp){
@@ -1148,7 +918,6 @@ function normalizedJobTitle(emp){
 async function loadAdminEmployees(){
   const list=document.getElementById("adminEmpList");
   renderListLoading(list);
-  setAdminBusy(true);
   try{
     const r=await api("adminEmployeesList");
     if(!r.success){renderListError(list,r.error||"تعذر التحميل.",loadAdminEmployees);return}
@@ -1160,28 +929,7 @@ async function loadAdminEmployees(){
     renderAdminEmployees();
     updateAdminSaveBar();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الموظفين.",loadAdminEmployees)}
-  finally{setAdminBusy(false)}
 }
-// The dropdown always includes an explicit "بدون فرع" choice now (value
-// ""), not just as a fallback placeholder for a broken reference - so
-// the admin can deliberately leave a branch employee unassigned (e.g.
-// the leader hasn't decided which branch they'll get yet) instead of
-// "متجول (بدون فرع)" only existing as the field-rep job-title option.
-// Saving with this selected now shows a strong confirmDanger warning
-// instead of being blocked outright - see saveAdminEmployees().
-//
-// Always mirrors the actual stored branchId rather than guessing at a
-// convenient default - this only ever runs against real saved data
-// (row build and revert() both call it with emp/orig.branchId, never
-// with a blank "just toggled the radio" value), so silently swapping
-// an empty or broken reference for an arbitrary first branch would
-// mean opening an unassigned employee's card shows a branch that was
-// never actually assigned - exactly the mismatch that should show
-// "بدون فرع" with the red flag instead. Whether selectedId is empty
-// (never assigned, or deliberately saved as "بدون فرع") or non-empty
-// but unmatched (the branch was deleted - BranchID left as the literal
-// "none", see BRANCH_DELETED_NOTICE in 00_Config.gs), both land on
-// "بدون فرع" the same way.
 function branchSelectOptions(select,selectedId){
   select.innerHTML="";
   const matchesReal=selectedId&&AdminS.branches.some(b=>b.id===selectedId);
@@ -1197,10 +945,6 @@ function branchSelectOptions(select,selectedId){
     select.appendChild(opt);
   });
   select.value=matchesReal?selectedId:"";
-  // Red border whenever "بدون فرع" is the current value, whether that's
-  // a broken reference or a deliberate not-yet-decided choice - both
-  // still mean this employee can't check in/out yet, so both deserve
-  // the same visual flag.
   select.classList.toggle("selectError",!select.value);
 }
 function makeRadio(name,value,label,checked){
@@ -1222,38 +966,16 @@ function renderAdminEmployees(){
   AdminS.employees.forEach(emp=>{
     const row=document.createElement("div");row.className="empRow";
 
-    // Collapsed summary: name, then username + code on one meta line,
-    // a status dot, an undo dot (shows even collapsed, so an unsaved
-    // row is never hidden from view), and the ✏️ toggle. Username is
-    // shown here only - never an editable field, since it's only ever
-    // set by the employee's own Telegram identity (see
-    // adminSaveEmployees_'s comment in 03_Employees.gs). Name is
-    // likewise display-only now - not part of what this panel edits.
     const summary=document.createElement("div");summary.className="empRowSummary";
     const text=document.createElement("div");text.className="rowText";
     const nameEl=document.createElement("div");nameEl.className="rowValue";nameEl.textContent="👤 "+(emp.name||"—");
     const metaEl=document.createElement("div");metaEl.className="rowLabel metaLtr";metaEl.textContent=(emp.username?"@"+emp.username:"—")+" · "+(emp.code||"—");
-    // Second meta line: job title, plus the assigned branch's name
-    // when the employee is a branch employee (same signal the backend
-    // uses - see normalizedJobTitle()'s comment below) - so the role
-    // and branch are visible at a glance without expanding the row.
-    // Only shown at all when the geofence drawer is active, same
-    // condition the branch dropdown itself is gated on.
     let roleEl=null;
     if(S.geofenceModuleAvailable){
       const empIsBranch=normalizedJobTitle(emp)===JOB_TITLE_BRANCH;
       let roleLine=empIsBranch?JOB_TITLE_BRANCH:JOB_TITLE_FIELD;
       if(empIsBranch){
         const br=AdminS.branches.find(x=>x.id===emp.branchId);
-        // Any branch employee with no matching branch gets the same
-        // warning badge here, regardless of *why* - a deliberately
-        // empty branchId (admin picked "بدون فرع", or a fresh
-        // field->branch switch never assigned one) and a broken
-        // reference left by a deleted branch (branchId==="none") both
-        // mean the same thing for this employee: no branch, no
-        // check-in/out until an admin fixes it. Same red flag on the
-        // card itself (.empRowError) so it's visible collapsed too,
-        // not just once expanded down to the select.
         roleLine+=" · "+(br?br.name:"⚠️ بدون فرع (يتطلب تعيين)");
         row.classList.toggle("empRowError",!br);
       }
@@ -1266,17 +988,8 @@ function renderAdminEmployees(){
     const editBtn=document.createElement("button");editBtn.type="button";editBtn.className="rowIconBtn";editBtn.textContent="✏️";editBtn.title="تعديل";
     summary.append(text,statusDot,dirtyDot,editBtn);
 
-    // Expanded details: hidden until the edit toggle is tapped. Only
-    // job title + branch are editable here - the name field was
-    // removed, so the save payload always carries emp.name unchanged
-    // (see empRowEls below and saveAdminEmployees).
     const details=document.createElement("div");details.className="empRowDetails hidden";
 
-    // Same signal the backend actually uses (isEmployeeGeofenced_,
-    // 11_Location_Core.gs) - trust the real stored job title first,
-    // only falling back to BranchID for a not-yet-migrated row. See
-    // normalizedJobTitle()'s comment above for why this can't just
-    // re-derive from BranchID directly.
     const initialIsBranch=S.geofenceModuleAvailable&&normalizedJobTitle(emp)===JOB_TITLE_BRANCH;
     const jobWrap=document.createElement("div");jobWrap.className="jobTitleGroup";
     const jobLabel=document.createElement("div");jobLabel.className="formLabel";jobLabel.style.margin="0";jobLabel.textContent="المسمى الوظيفي";
@@ -1302,10 +1015,6 @@ function renderAdminEmployees(){
     row.append(summary,details);
     list.appendChild(row);
 
-    // Only one row's details stay open at a time: opening this one
-    // collapses whichever other row was previously expanded, same as
-    // switching the branch form to a different branch replaces what
-    // was there rather than stacking multiple open edits.
     function toggleDetails(){
       const opening=details.classList.contains("hidden");
       if(openEmpDetails&&openEmpDetails!==details)openEmpDetails.classList.add("hidden");
@@ -1333,12 +1042,6 @@ function renderAdminEmployees(){
       checkDirty();
     };
 
-    // Restores this row's radio + branch select back to the last-saved
-    // values (AdminS.original) and clears its dirty flag/dot - used by
-    // discardAllEmployeeEdits() below so choosing "تجاهل التغييرات"
-    // actually undoes the edit instead of just hiding it collapsed
-    // (which used to leave the changed-but-unsaved values sitting in
-    // the DOM, ready to resurface next time the row was reopened).
     function revert(){
       const orig=AdminS.original[emp.chatId];
       branchOpt.input.checked=orig.jobTitle===JOB_TITLE_BRANCH;
@@ -1352,10 +1055,6 @@ function renderAdminEmployees(){
     empRowEls[emp.chatId]={name:emp.name,branchOpt,fieldOpt,branchSelect,currentJobTitle,currentBranchId,revert};
   });
 }
-// Reverts every employee row with unsaved edits back to its last-saved
-// values in one pass - called right after the admin confirms "تجاهل
-// التغييرات" in confirmUnsaved, so no edited-but-unsaved trace is left
-// behind (see revert() above).
 function discardAllEmployeeEdits(){
   Object.values(empRowEls).forEach(els=>els&&els.revert&&els.revert());
   updateAdminSaveBar();
@@ -1370,17 +1069,8 @@ function updateAdminSaveBar(){
 async function saveAdminEmployees(){
   const changedIds=Object.keys(AdminS.dirty).filter(id=>AdminS.dirty[id]);
   if(!changedIds.length)return;
-  if(!AdminS.lock.employees.editable)return; // belt-and-suspenders - the disabled/pointer-events-blocked button shouldn't be reachable, but never trust that alone
+  if(!AdminS.lock.employees.editable)return;
 
-  // A changed row can now be a branch employee with no branch chosen -
-  // deliberately allowed (see branchSelectOptions()), e.g. the leader
-  // hasn't decided yet which branch this employee will belong to. That
-  // no longer blocks the save outright, but still needs the admin to
-  // consciously accept the consequence first: this employee will save
-  // successfully but can't check in/out until a real branch is set.
-  // Same confirmDanger red/🚨 treatment as deleting a branch that still
-  // has employees on it (deleteAdminBranch below) - same category of
-  // "make sure this is really what you want" moment.
   const unresolved=changedIds
     .map(id=>({id,els:empRowEls[id]}))
     .filter(x=>x.els&&x.els.currentJobTitle()===JOB_TITLE_BRANCH&&!x.els.currentBranchId());
@@ -1399,7 +1089,6 @@ async function saveAdminEmployees(){
 
   const btn=document.getElementById("adminEmpSaveBtn");
   btn.disabled=true;btn.textContent="جارٍ الحفظ...";
-  setAdminBusy(true);
   const changes=changedIds.map(id=>{
     const els=empRowEls[id];
     return{chatId:id,name:els.name,jobTitle:els.currentJobTitle(),branchId:els.currentBranchId()};
@@ -1414,12 +1103,6 @@ async function saveAdminEmployees(){
         orig.jobTitle=els.currentJobTitle();
         orig.branchId=els.currentBranchId();
       }
-      // AdminS.employees is what renderAdminEmployees() actually reads
-      // (the collapsed roleLine text, the dropdown's selected value) -
-      // without updating it too, a newly-assigned branch (or job-title
-      // change) wouldn't show up until the whole panel is reopened,
-      // even though the save itself already succeeded and
-      // AdminS.original/AdminS.dirty have already moved on above.
       const emp=AdminS.employees.find(e=>e.chatId===id);
       if(emp&&els){
         emp.jobTitle=els.currentJobTitle();
@@ -1438,45 +1121,23 @@ async function saveAdminEmployees(){
     alert("تعذر الاتصال بالخادم أثناء الحفظ.");
   }finally{
     updateAdminSaveBar();
-    setAdminBusy(false);
   }
 }
 
-// ---- branches tab ----
-// Each branch gets its own row-card (buildBranchRow), the same shape
-// as an employee row: a tap-to-expand summary plus an inline details
-// section with the actual edit form, map and save/cancel/delete
-// actions all scoped to that one row's closures. Only one row (or the
-// "new branch" card) is ever expanded at a time - see
-// requestOpenBranchRow.
 let branchRowSeq=0;
 
 async function loadAdminBranches(){
   const list=document.getElementById("adminBranchList");
   renderListLoading(list);
-  setAdminBusy(true);
   try{
     const r=await api("adminBranchesList");
     if(!r.success){renderListError(list,r.error||"تعذر التحميل.",loadAdminBranches);return}
     AdminS.branchList=r.branches||[];
     AdminS.loadedBranches=true;
-    // Keep the Employees tab's branch dropdown in sync too - AdminS.branches
-    // is a separate snapshot, seeded once from adminEmployeesList's own
-    // response, that would otherwise only ever reflect whatever the
-    // branch list looked like when the Employees tab was first opened -
-    // missing anything added/renamed/removed here afterward until the
-    // whole panel is reopened. This runs on every loadAdminBranches()
-    // call (initial tab open, and after every branch save/delete below),
-    // so it's always current. Re-rendering the employees list here is
-    // safe even though we're on the Branches tab right now: switching
-    // tabs already forces any dirty employee edits to be confirmed/
-    // discarded first (see switchAdminTab), so there's never an
-    // in-progress edit this could clobber.
     AdminS.branches=AdminS.branchList.map(b=>({id:b.id,name:b.name}));
     if(AdminS.employees.length)renderAdminEmployees();
     renderAdminBranchList();
   }catch(e){renderListError(list,"تعذر تحميل قائمة الفروع.",loadAdminBranches)}
-  finally{setAdminBusy(false)}
 }
 function renderAdminBranchList(){
   const list=document.getElementById("adminBranchList");
@@ -1489,10 +1150,6 @@ function renderAdminBranchList(){
   AdminS.branchList.forEach(b=>list.appendChild(buildBranchRow(b,false).row));
 }
 
-// Opens/closes one row's details, always keeping at most one open.
-// Switching to a different row (or closing the currently-open one)
-// while it holds unsaved edits needs the same discard confirmation
-// closing the whole panel does.
 async function requestOpenBranchRow(rowCtx){
   if(openBranchDetails&&openBranchDetails!==rowCtx.details){
     if(openBranchIsDirty&&openBranchIsDirty()){
@@ -1521,10 +1178,6 @@ async function requestOpenBranchRow(rowCtx){
 function buildBranchRow(b,isNew){
   const row=document.createElement("div");row.className="branchRowWrap";
 
-  // Collapsed summary: name only (no lat/lng/radius line - that only
-  // matters once you're editing the branch, not while scanning the
-  // list), a ✏️ toggle, and a 🗑️ that deletes without needing to
-  // expand first.
   const summary=document.createElement("div");summary.className="branchRowSummary";
   const text=document.createElement("div");text.className="rowText";
   const nameEl=document.createElement("div");nameEl.className="rowValue branchName";nameEl.textContent="📍 "+(isNew?"فرع جديد":b.name);
@@ -1540,8 +1193,6 @@ function buildBranchRow(b,isNew){
   }
   summary.append(text,actions);
 
-  // Expanded details: this row's own copy of the edit form, previously
-  // shared by every row via #branchFormCard.
   const details=document.createElement("div");details.className="branchRowDetails hidden";
 
   const nameWrap=document.createElement("div");nameWrap.className="formInlineLabel";
@@ -1557,6 +1208,8 @@ function buildBranchRow(b,isNew){
   details.appendChild(linkWrap);
   const feedback=document.createElement("div");feedback.className="formHint";
   details.appendChild(feedback);
+  const extractProgress=document.createElement("div");extractProgress.className="progress";
+  details.appendChild(extractProgress);
 
   const row2=document.createElement("div");row2.className="formRow2";
   const latWrap=document.createElement("div");
@@ -1570,9 +1223,6 @@ function buildBranchRow(b,isNew){
   row2.append(latWrap,lngWrap);
   details.appendChild(row2);
 
-  // Map needs its own DOM id per row (Leaflet is initialized once per
-  // container and multiple rows can each end up with a map instance
-  // over the life of the panel), so every row gets a unique one.
   const seq=++branchRowSeq;
   const mapElId="branchMapEl_"+seq;
   const mapWrap=document.createElement("div");mapWrap.className="mapWrap branchMapWrap";
@@ -1583,85 +1233,6 @@ function buildBranchRow(b,isNew){
   mapWrap.appendChild(mapBox);
   details.appendChild(mapWrap);
 
-  // ---- branch type question (mandatory - drives the saved radius) ----
-  // Below the preview map, per the requested placement. Not a "radius"
-  // field at all from the admin's point of view - they're never asked
-  // to type a number - just a description of the branch's physical
-  // access, which this then maps to a fixed GPS check-in radius:
-  //   - inside a mall/shopping center: 80m. GPS reception is
-  //     materially worse inside a large concrete multi-floor building
-  //     (weak/reflected satellite signal), so a tight radius would
-  //     reject real employees standing right at the branch; 80m gives
-  //     enough slack to absorb that without opening the geofence up to
-  //     "anywhere in the mall".
-  //   - outdoor / independent street entrance: 50m. Outdoor GPS
-  //     reception is normally accurate enough that a tighter radius
-  //     doesn't cost real check-ins, and keeps the geofence meaningfully
-  //     tied to the actual storefront rather than half the block.
-  // Mandatory: saveBtn stays disabled (see updateSaveEnabled) until one
-  // of these is picked, same as the name/coordinates requirement.
-  const typeGroup=document.createElement("div");typeGroup.className="branchTypeGroup";
-  const typeLabel=document.createElement("label");typeLabel.className="formLabel";typeLabel.textContent="🏢 كيف تصف هذا الفرع؟";
-  typeGroup.appendChild(typeLabel);
-  const typeIntro=document.createElement("div");typeIntro.className="branchTypeIntro";
-  typeIntro.textContent="اختر الوصف الأقرب لموقع الفرع فعلياً - هذا يحدد تلقائياً نطاق تسجيل الحضور (GPS) المناسب حوله.";
-  typeGroup.appendChild(typeIntro);
-
-  const typeCards=document.createElement("div");typeCards.className="branchTypeCards";
-  const typeRadioName="branchType_"+seq;
-
-  function makeBranchTypeCard(value,radiusMeters,icon,title,desc,examples){
-    const card=document.createElement("label");card.className="branchTypeCard";
-    const input=document.createElement("input");input.type="radio";input.name=typeRadioName;input.value=value;
-    const bodyEl=document.createElement("div");bodyEl.className="branchTypeBody";
-    const titleEl=document.createElement("div");titleEl.className="branchTypeTitle";
-    const titleText=document.createElement("span");titleText.textContent=icon+" "+title;
-    const radiusBadge=document.createElement("span");radiusBadge.className="branchTypeRadius";radiusBadge.textContent="النطاق: "+radiusMeters+" م";
-    titleEl.append(titleText,radiusBadge);
-    const descEl=document.createElement("div");descEl.className="branchTypeDesc";descEl.textContent=desc;
-    const examplesEl=document.createElement("div");examplesEl.className="branchTypeExamples";examplesEl.textContent="مثال: "+examples;
-    bodyEl.append(titleEl,descEl,examplesEl);
-    card.append(input,bodyEl);
-    return{card,input};
-  }
-
-  const BRANCH_TYPE_MALL_RADIUS=80;
-  const BRANCH_TYPE_OUTDOOR_RADIUS=50;
-
-  const mallType=makeBranchTypeCard(
-    "mall",BRANCH_TYPE_MALL_RADIUS,"🏬","داخل مول / مركز تجاري",
-    "الفرع يقع داخل مبنى مول أو مركز تجاري، وليس له باب مستقل يفتح مباشرة على الشارع - الموظف يدخل من البوابة الرئيسية للمول ويمشي عبر الممرات الداخلية للوصول للفرع.",
-    "فرع داخل سيتي ستارز، مول العرب، أو أي محل ضمن مركز تجاري متعدد الطوابق تشترك فيه عشرات المحلات الأخرى."
-  );
-  const outdoorType=makeBranchTypeCard(
-    "outdoor",BRANCH_TYPE_OUTDOOR_RADIUS,"🚶","فرع خارجي بمدخل مباشر على الشارع",
-    "للفرع باب أو مدخل خاص يفتح مباشرة على الشارع أو الرصيف - سواء كان في مبنى مستقل، أو في دور أرضي بمدخل منفصل ضمن مبنى سكني أو تجاري.",
-    "محل على الشارع الرئيسي، فرع بمدخل مستقل في الدور الأرضي، أو كشك/بوث خارجي."
-  );
-  typeCards.append(mallType.card,outdoorType.card);
-  typeGroup.appendChild(typeCards);
-
-  const typeRequired=document.createElement("div");typeRequired.className="branchTypeRequired";
-  typeGroup.appendChild(typeRequired);
-  details.appendChild(typeGroup);
-
-  function selectedBranchType(){
-    if(mallType.input.checked)return"mall";
-    if(outdoorType.input.checked)return"outdoor";
-    return null;
-  }
-  function selectedBranchRadius(){
-    const t=selectedBranchType();
-    if(t==="mall")return BRANCH_TYPE_MALL_RADIUS;
-    if(t==="outdoor")return BRANCH_TYPE_OUTDOOR_RADIUS;
-    return null;
-  }
-  function updateTypeCardStyles(){
-    mallType.card.classList.toggle("selected",mallType.input.checked);
-    outdoorType.card.classList.toggle("selected",outdoorType.input.checked);
-    typeRequired.textContent=selectedBranchType()?"":"⚠️ هذا الاختيار إلزامي لحفظ الفرع.";
-  }
-
   const btnWrap=document.createElement("div");btnWrap.className="action-buttons";
   const saveBtn=document.createElement("button");saveBtn.type="button";saveBtn.className="action";saveBtn.textContent=isNew?"حفظ الفرع":"حفظ التغييرات";
   const cancelBtn=document.createElement("button");cancelBtn.type="button";cancelBtn.className="cancelText";cancelBtn.textContent="إلغاء";
@@ -1670,12 +1241,12 @@ function buildBranchRow(b,isNew){
 
   row.append(summary,details);
 
-  // ---- per-row state, all closure-scoped so rows never collide ----
   let map=null,marker=null;
   let coordsValid=false;
   let extractInFlight=false;
   let extractTimer=null;
-  let original={name:"",lat:"",lng:"",link:"",type:null};
+  let original={name:"",lat:"",lng:"",link:""};
+  const radiusMeters=(b&&b.radiusMeters)||100;
 
   function ensureMap(lat,lng){
     if(typeof L==="undefined")return;
@@ -1690,17 +1261,12 @@ function buildBranchRow(b,isNew){
     mapBox.classList.add("hasMap");
     requestAnimationFrame(()=>map&&map.invalidateSize());
   }
-  // Tracks whether lat/lng currently hold a coordinate pair that can
-  // actually be saved - either the branch's own persisted coordinates
-  // or a just-extracted result. Not tied to the fields simply being
-  // non-empty, since a failed extraction can leave stale text in the
-  // feedback area but must never leave Save enabled.
   function updateSaveEnabled(){
     const name=nameInput.value.trim();
-    saveBtn.disabled=!(name&&coordsValid&&!extractInFlight&&selectedBranchType());
+    saveBtn.disabled=!(name&&coordsValid&&!extractInFlight);
   }
   function isDirty(){
-    return nameInput.value!==original.name||latInput.value!==original.lat||lngInput.value!==original.lng||linkInput.value!==original.link||selectedBranchType()!==original.type;
+    return nameInput.value!==original.name||latInput.value!==original.lat||lngInput.value!==original.lng||linkInput.value!==original.link;
   }
   function updateLinkClearBtn(){
     linkClearBtn.classList.toggle("hidden",!linkInput.value);
@@ -1711,30 +1277,17 @@ function buildBranchRow(b,isNew){
     latInput.value=b?String(b.lat):"";
     lngInput.value=b?String(b.lng):"";
     feedback.textContent="";
+    extractProgress.classList.remove("show");
     mapBox.classList.remove("hasMap");
     coordsValid=!!b;
     extractInFlight=false;
     clearTimeout(extractTimer);
     updateLinkClearBtn();
-    // The sheet has no dedicated "type" column - just RadiusMeters - so
-    // an existing branch can only be preselected when its saved radius
-    // exactly matches one of the two fixed values below. Anything else
-    // (an old hand-tuned radius, or the previous 100m new-branch
-    // default) is left unselected on purpose: the admin has to
-    // consciously pick a type rather than have one silently guessed for
-    // them, and doing so will standardize this branch onto 80/50 next
-    // save - which is the intended migration path, not a bug.
-    mallType.input.checked=!!b&&b.radiusMeters===BRANCH_TYPE_MALL_RADIUS;
-    outdoorType.input.checked=!!b&&b.radiusMeters===BRANCH_TYPE_OUTDOOR_RADIUS;
-    updateTypeCardStyles();
-    original={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value,type:selectedBranchType()};
+    original={name:nameInput.value,lat:latInput.value,lng:lngInput.value,link:linkInput.value};
     updateSaveEnabled();
   }
   fillFromBranch();
 
-  // Reverts an existing row's fields back to the branch's saved
-  // values, or - for a not-yet-saved new-branch card - removes the row
-  // entirely, since there's nothing underneath it to revert to.
   function discard(){
     if(isNew){row.remove();return}
     fillFromBranch();
@@ -1743,18 +1296,12 @@ function buildBranchRow(b,isNew){
     if(b)ensureMap(b.lat,b.lng);
   }
 
-  // Runs automatically in the background as soon as a link shows up in
-  // the field - on paste, on typing, on autofill - rather than needing
-  // a separate "extract" tap. Debounced 600ms after the last change so
-  // a link pasted or typed a character at a time doesn't fire a
-  // request per keystroke. The link-value check after the await guards
-  // against a stale response landing after the admin has already
-  // changed/cleared the field again.
   function scheduleExtract(){
     clearTimeout(extractTimer);
     latInput.value="";lngInput.value="";
     mapBox.classList.remove("hasMap");
     coordsValid=false;
+    extractProgress.classList.remove("show");
     updateLinkClearBtn();
     const link=linkInput.value.trim();
     if(!link){feedback.textContent="";extractInFlight=false;updateSaveEnabled();return}
@@ -1765,16 +1312,12 @@ function buildBranchRow(b,isNew){
   async function runExtract(link){
     extractInFlight=true;
     feedback.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
-    setAdminBusy(true);
+    extractProgress.classList.add("show");
     updateSaveEnabled();
     try{
       const r=await api("adminExtractCoords",{url:link});
-      if(linkInput.value.trim()!==link)return; // link changed since this call started
+      if(linkInput.value.trim()!==link)return;
       if(!r.success){
-        // Give a concrete, actionable reason instead of a bare "failed" -
-        // the backend's own r.error is used when it has one; otherwise
-        // fall back to the most common cause (not a real Google Maps
-        // location link) with a next step, not just a dead end.
         feedback.textContent="❌ "+(r.error||"تعذر العثور على إحداثيات في هذا الرابط. تأكد من أنه رابط موقع من خرائط جوجل (زر «مشاركة» ثم «نسخ الرابط»)، وأنه رابط كامل وليس نصاً مختصراً، ثم الصقه هنا مجدداً.");
         coordsValid=false;
         return;
@@ -1788,7 +1331,7 @@ function buildBranchRow(b,isNew){
       feedback.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع. تحقق من اتصال الإنترنت، ثم الصق الرابط مرة أخرى للمحاولة من جديد.";
       coordsValid=false;
     }finally{
-      setAdminBusy(false);
+      extractProgress.classList.remove("show");
       if(linkInput.value.trim()===link){
         extractInFlight=false;
         updateSaveEnabled();
@@ -1799,11 +1342,9 @@ function buildBranchRow(b,isNew){
     const name=nameInput.value.trim();
     const lat=latInput.value.trim();
     const lng=lngInput.value.trim();
-    const radiusMeters=selectedBranchRadius();
-    if(!name||!lat||!lng||!radiusMeters)return; // Save stays disabled in this case - defensive only
-    if(!AdminS.lock.branches.editable)return; // belt-and-suspenders - see saveAdminEmployees()'s matching guard
+    if(!name||!lat||!lng)return;
+    if(!AdminS.lock.branches.editable)return;
     saveBtn.disabled=true;const prevText=saveBtn.textContent;saveBtn.textContent="جارٍ الحفظ...";
-    setAdminBusy(true);
     try{
       const r=await api("adminBranchesSave",{branchId:b?b.id:"",name:name,lat:lat,lng:lng,radiusMeters:radiusMeters});
       if(!r.success){alert(r.error||"تعذر حفظ الفرع.");return}
@@ -1814,18 +1355,15 @@ function buildBranchRow(b,isNew){
     }finally{
       saveBtn.textContent=prevText;
       updateSaveEnabled();
-      setAdminBusy(false);
     }
   }
 
   nameInput.addEventListener("input",updateSaveEnabled);
   linkInput.addEventListener("input",scheduleExtract);
-  mallType.input.addEventListener("change",()=>{updateTypeCardStyles();updateSaveEnabled()});
-  outdoorType.input.addEventListener("change",()=>{updateTypeCardStyles();updateSaveEnabled()});
   linkClearBtn.onclick=()=>{
     linkInput.value="";
     linkInput.focus();
-    scheduleExtract(); // clears lat/lng/map/coordsValid and hides the clear button itself
+    scheduleExtract();
   };
   saveBtn.onclick=save;
   cancelBtn.onclick=async()=>{
@@ -1845,9 +1383,6 @@ function buildBranchRow(b,isNew){
   return rowCtx;
 }
 
-// "+ إضافة فرع جديد" inserts a new, already-expanded row-card at the
-// top of the list instead of populating a shared form - same
-// unsaved-changes guard as switching to any other row.
 async function startNewBranchRow(){
   if(openBranchDetails){
     if(openBranchIsDirty&&openBranchIsDirty()){
@@ -1856,7 +1391,7 @@ async function startNewBranchRow(){
     closeOpenBranchRow();
   }
   const list=document.getElementById("adminBranchList");
-  if(!AdminS.branchList.length)list.innerHTML=""; // clear the "لا توجد فروع" message
+  if(!AdminS.branchList.length)list.innerHTML="";
   const rowCtx=buildBranchRow(null,true);
   list.insertBefore(rowCtx.row,list.firstChild);
   rowCtx.details.classList.remove("hidden");
@@ -1867,21 +1402,8 @@ async function startNewBranchRow(){
   document.querySelector("#adminBranchesPanel").scrollIntoView({block:"nearest"});
 }
 
-// Confirms locally first (using the employee list already loaded when
-// the admin panel opened, to word the warning accurately when
-// employees are actually assigned to this branch) then lets the
-// backend do the real deletion + reassignment + admin notice
-// (adminDeleteBranch_, 10_Branches.gs) - see that function's comment
-// for why there's no second server round trip just to confirm.
-//
-// IMPORTANT: affected employees are NOT moved to free-roam - their
-// BranchID is set to "none", which blocks check-in/check-out entirely
-// until an admin manually reassigns them (see BRANCH_DELETED_NOTICE,
-// 00_Config.gs). The confirmation here has to say that plainly, not
-// soften it into "moved to roaming", or the admin deletes the branch
-// thinking it's a harmless reassignment.
 async function deleteAdminBranch(b,rowCtx){
-  if(!AdminS.lock.branches.editable)return; // belt-and-suspenders - see saveAdminEmployees()'s matching guard
+  if(!AdminS.lock.branches.editable)return;
   const affected=AdminS.employees.filter(e=>e.branchId===b.id);
   let ok;
   if(affected.length){
@@ -1899,28 +1421,14 @@ async function deleteAdminBranch(b,rowCtx){
     );
   }
   if(!ok)return;
-  setAdminBusy(true);
   try{
     const r=await api("adminBranchesDelete",{branchId:b.id});
     if(!r.success){alert(r.error||"تعذر حذف الفرع.");return}
     if(rowCtx&&openBranchDetails===rowCtx.details){openBranchDetails=null;openBranchIsDirty=null;openBranchDiscard=null}
-    // Drop it from the in-memory list and the DOM right away, instead of
-    // waiting on the loadAdminBranches() round trip below to notice it's
-    // gone - the backend has already confirmed the delete at this point,
-    // so there's no reason the admin should still see the row sitting
-    // there for however long that request takes (or, if a server-side
-    // cache is ever slow to catch up - see invalidateBranchCache_() in
-    // 10_Branches.gs - for however long THAT takes). loadAdminBranches()
-    // right after is still the source of truth and will correct anything
-    // this optimistic removal got wrong.
-    AdminS.branchList=AdminS.branchList.filter(x=>x.id!==b.id);
-    if(rowCtx&&rowCtx.row&&rowCtx.row.isConnected)rowCtx.row.remove();
     await loadAdminBranches();
     if(!Object.values(AdminS.dirty).some(Boolean))loadAdminEmployees();
   }catch(e){
     alert("تعذر الاتصال بالخادم أثناء حذف الفرع.");
-  }finally{
-    setAdminBusy(false);
   }
 }
 
@@ -1931,11 +1439,6 @@ document.getElementById("adminEmpTabBtn").onclick=()=>switchAdminTab("employees"
 document.getElementById("adminBranchTabBtn").onclick=()=>switchAdminTab("branches");
 document.getElementById("adminEmpSaveBtn").onclick=saveAdminEmployees;
 document.getElementById("branchAddBtn").onclick=startNewBranchRow;
-// Leaving the admin panel open but navigating the browser away (reload,
-// back, closing the tab) is the same "unsaved changes" situation - the
-// native beforeunload prompt is the only one browsers allow here, so it
-// can't be swapped for the styled modal, but it only fires when there's
-// actually something to lose.
 window.addEventListener("beforeunload",function(e){
   if(document.getElementById("adminOverlay").classList.contains("hidden"))return;
   if(Object.values(AdminS.dirty).some(Boolean)||branchFormDirty()){
@@ -1943,7 +1446,6 @@ window.addEventListener("beforeunload",function(e){
   }
 });
 
-// ---- help center ----
 function renderHelpList(){
   const list=document.getElementById("helpList");
   list.innerHTML="";
