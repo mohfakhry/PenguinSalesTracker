@@ -1557,10 +1557,6 @@ function buildBranchRow(b,isNew){
   details.appendChild(linkWrap);
   const feedback=document.createElement("div");feedback.className="formHint";
   details.appendChild(feedback);
-  // Same blue loading bar used on the home/confirm screens (.progress),
-  // shown only while a coordinate extraction is actually in flight.
-  const extractProgress=document.createElement("div");extractProgress.className="progress";
-  details.appendChild(extractProgress);
 
   const row2=document.createElement("div");row2.className="formRow2";
   const latWrap=document.createElement("div");
@@ -1715,7 +1711,6 @@ function buildBranchRow(b,isNew){
     latInput.value=b?String(b.lat):"";
     lngInput.value=b?String(b.lng):"";
     feedback.textContent="";
-    extractProgress.classList.remove("show");
     mapBox.classList.remove("hasMap");
     coordsValid=!!b;
     extractInFlight=false;
@@ -1760,7 +1755,6 @@ function buildBranchRow(b,isNew){
     latInput.value="";lngInput.value="";
     mapBox.classList.remove("hasMap");
     coordsValid=false;
-    extractProgress.classList.remove("show");
     updateLinkClearBtn();
     const link=linkInput.value.trim();
     if(!link){feedback.textContent="";extractInFlight=false;updateSaveEnabled();return}
@@ -1771,7 +1765,7 @@ function buildBranchRow(b,isNew){
   async function runExtract(link){
     extractInFlight=true;
     feedback.textContent="⏳ جارٍ تحديد الموقع من الرابط...";
-    extractProgress.classList.add("show");
+    setAdminBusy(true);
     updateSaveEnabled();
     try{
       const r=await api("adminExtractCoords",{url:link});
@@ -1794,7 +1788,7 @@ function buildBranchRow(b,isNew){
       feedback.textContent="❌ تعذر الاتصال بالخادم أثناء تحديد الموقع. تحقق من اتصال الإنترنت، ثم الصق الرابط مرة أخرى للمحاولة من جديد.";
       coordsValid=false;
     }finally{
-      extractProgress.classList.remove("show");
+      setAdminBusy(false);
       if(linkInput.value.trim()===link){
         extractInFlight=false;
         updateSaveEnabled();
