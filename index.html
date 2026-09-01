@@ -380,6 +380,61 @@ input[readonly]{opacity:.75;cursor:default}
 </div>
 
 <script>
+const FRONTEND_CONFIG = {
+  // Application settings
+  SESSION_TIMEOUT_MINUTES: 55,
+  RATE_LIMIT_MINUTES: 15,
+  API_TIMEOUT_MS: 15000,
+  
+  // Alert Messages
+  ALERT_RATE_LIMIT: "لقد قمت بالتسجيل قبل قليل. الرجاء الانتظار لمدة 15 دقيقة بين كل عملية تسجيل.",
+  ALERT_SESSION_TIMEOUT: "التطبيق مفتوح في الخلفية لفترة طويلة، يرجى إعادة تشغيل التطبيق (Restart the app).",
+  ALERT_LOCATION_DENIED: "تم رفض الوصول إلى الموقع. اسمح للتطبيق باستخدام موقعك ثم حاول مرة أخرى.",
+  ALERT_LOCATION_UNAVAILABLE: "تعذر تحديد موقعك الحالي.",
+  ALERT_LOCATION_TIMEOUT: "انتهت مهلة تحديد الموقع. حاول مرة أخرى.",
+  ALERT_SAVE_ERROR: "تعذر الاتصال بالخادم أثناء الحفظ.",
+  ALERT_DELETE_ERROR: "تعذر الاتصال بالخادم أثناء حذف الفرع.",
+  ALERT_SAVE_PARTIAL: "تم حفظ باقي التغييرات، وتعذر حفظ التالي:\n",
+  
+  // UI States & Statuses
+  STATUS_READY: FRONTEND_CONFIG.STATUS_READY,
+  STATUS_WAITING_BRANCH: FRONTEND_CONFIG.STATUS_WAITING_BRANCH,
+  STATUS_REVIEW: FRONTEND_CONFIG.STATUS_REVIEW,
+  STATUS_SAVED: FRONTEND_CONFIG.STATUS_SAVED,
+  STATUS_REGISTRATION_REQUIRED: FRONTEND_CONFIG.STATUS_REGISTRATION_REQUIRED,
+  STATUS_USERNAME_REQUIRED: FRONTEND_CONFIG.STATUS_USERNAME_REQUIRED,
+  STATUS_INACTIVE: FRONTEND_CONFIG.STATUS_INACTIVE,
+  STATUS_BOT_REQUIRED: FRONTEND_CONFIG.STATUS_BOT_REQUIRED,
+  
+  // Progress & Loading Messages
+  MSG_DETERMINING_LOCATION: FRONTEND_CONFIG.MSG_DETERMINING_LOCATION,
+  MSG_DETERMINED_SAVING: FRONTEND_CONFIG.MSG_DETERMINED_SAVING,
+  MSG_LOADING: FRONTEND_CONFIG.MSG_LOADING,
+  MSG_CONNECTING: FRONTEND_CONFIG.MSG_CONNECTING,
+  MSG_CONNECTED: FRONTEND_CONFIG.MSG_CONNECTED,
+  MSG_LOCATION_NOT_SUPPORTED: FRONTEND_CONFIG.MSG_LOCATION_NOT_SUPPORTED,
+  MSG_LOCATION_FOUND: FRONTEND_CONFIG.MSG_LOCATION_FOUND,
+  MSG_LOCATION_FAILED: FRONTEND_CONFIG.MSG_LOCATION_FAILED,
+  
+  // Unassigned Branch Screen
+  UNASSIGNED_TITLE: FRONTEND_CONFIG.STATUS_WAITING_BRANCH,
+  UNASSIGNED_MSG: "لم يتم تعيين فرع لك بعد. سيتم تفعيل أزرار الحضور والانصراف تلقائياً فور تعيين فرعك من قبل الإدارة.",
+  
+  // Admin Screens
+  ADMIN_NO_EMPLOYEES: "لا يوجد موظفون مسجلون بعد.",
+  ADMIN_NO_BRANCHES: "لا توجد فروع مضافة بعد.",
+  ADMIN_LOCKED_BY_OTHER: "🔒 مقفل من قبل مشرف آخر",
+  ADMIN_NO_CHANGES: "لا توجد تغييرات",
+  ADMIN_SAVE_CHANGES: "حفظ التغييرات",
+  ADMIN_SAVING: "جارٍ الحفظ...",
+  
+  // Confirmations
+  CONFIRM_UNSAVED_EMPLOYEES: "لديك تغييرات غير محفوظة في صفحة الموظفين.",
+  CONFIRM_UNSAVED_BRANCH: "لديك تغييرات غير محفوظة في هذا الفرع.",
+  CONFIRM_UNSAVED_CURRENT_BRANCH: "لديك تغييرات غير محفوظة في الفرع الحالي.",
+  CONFIRM_UNSAVED_CLOSE: " هل تريد الإغلاق بدون حفظ؟"
+};
+
 const tg=window.Telegram&&window.Telegram.WebApp;
 const BUSINESS_NAME = "زيارات المبيعات";
 document.getElementById("businessName").textContent = BUSINESS_NAME;
@@ -516,7 +571,7 @@ async function loadConfirmLocationPreview(action){
   const prog = document.getElementById("confirmProgress");
 
   if(!navigator.geolocation){
-    document.getElementById("confirmAddress").textContent="الجهاز لا يدعم تحديد الموقع.";
+    document.getElementById("confirmAddress").textContent=FRONTEND_CONFIG.MSG_LOCATION_NOT_SUPPORTED;
     btn.disabled = false;
     prog.classList.remove("show");
     return;
@@ -527,7 +582,7 @@ async function loadConfirmLocationPreview(action){
     S.coords={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy};
     S.coordsAt=Date.now();
     ensureConfirmMap(S.coords.lat,S.coords.lng);
-    document.getElementById("confirmAddress").textContent="تم تحديد الموقع";
+    document.getElementById("confirmAddress").textContent=FRONTEND_CONFIG.MSG_LOCATION_FOUND;
     
     // Unlock button once location is fetched successfully
     btn.disabled = false;
@@ -538,7 +593,7 @@ async function loadConfirmLocationPreview(action){
     if(addr){S.address=addr;const el=document.getElementById("confirmAddress");if(el)el.textContent=addr}
   }catch(e){
     if(S.action!==action)return;
-    document.getElementById("confirmAddress").textContent="تعذر تحديد الموقع، سيُعاد تحديده عند التأكيد.";
+    document.getElementById("confirmAddress").textContent=FRONTEND_CONFIG.MSG_LOCATION_FAILED;
     const sk=document.getElementById("confirmMapSkeleton");if(sk)sk.textContent="⚠️ تعذر عرض الخريطة";
     
     // Unlock button anyway so they can attempt to submit
@@ -597,9 +652,9 @@ function renderHome(){
   const v=V();
 
   if(branchUnassigned()){
-    home("⏳","بانتظار تعيين الفرع","لم يتم تعيين فرع لك بعد. سيتم تفعيل أزرار الحضور والانصراف تلقائياً فور تعيين فرعك من قبل الإدارة.","warningIcon");
+    home("⏳", FRONTEND_CONFIG.UNASSIGNED_TITLE, FRONTEND_CONFIG.UNASSIGNED_MSG, "warningIcon");
     document.getElementById("actionButtons").classList.add("hidden");
-    document.getElementById("footerStatus").textContent="بانتظار تعيين الفرع";
+    document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_WAITING_BRANCH;
     return;
   }
 
@@ -614,7 +669,7 @@ function renderHome(){
   checkin.onclick=()=>confirmAction("checkin");
   checkout.onclick=()=>confirmAction("checkout");
 
-  document.getElementById("footerStatus").textContent="جاهز";
+  document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_READY;
 }
 function renderError(msg){
   const previous=document.getElementById("temporaryRetry");
@@ -653,7 +708,7 @@ function openConfirm(action){
   document.getElementById("confirmMapBox").classList.remove("hasMap");
   document.getElementById("confirmMapSkeleton").textContent="📍 جارٍ تحميل الخريطة...";
 
-  document.getElementById("footerStatus").textContent="مراجعة العملية";
+  document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_REVIEW;
   
   // Lock proceed button while fetching location
   btn.disabled = true;
@@ -666,26 +721,26 @@ function openConfirm(action){
 function confirmAction(action){
   if(S.busy)return;
   if(branchUnassigned())return;
-  if(S.lastSubmit && (Date.now() - S.lastSubmit.time.getTime() < 15 * 60 * 1000)){
-    alert("لقد قمت بالتسجيل قبل قليل. الرجاء الانتظار لمدة 15 دقيقة بين كل عملية تسجيل.");
+  if(S.lastSubmit && (Date.now() - S.lastSubmit.time.getTime() < FRONTEND_CONFIG.RATE_LIMIT_MINUTES * 60 * 1000)){
+    alert(FRONTEND_CONFIG.ALERT_RATE_LIMIT);
     return;
   }
   openConfirm(action);
 }
 
-function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}))}
+function getLocation(){return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:FRONTEND_CONFIG.API_TIMEOUT_MS,maximumAge:0}))}
 
 async function postAction(){
   if(S.busy)return;
-  if(Date.now() - S.initTime > 55 * 60 * 1000) {
-    alert("التطبيق مفتوح في الخلفية لفترة طويلة، يرجى إعادة تشغيل التطبيق (Restart the app).");
+  if(Date.now() - S.initTime > FRONTEND_CONFIG.SESSION_TIMEOUT_MINUTES * 60 * 1000) {
+    alert(FRONTEND_CONFIG.ALERT_SESSION_TIMEOUT);
     if(tg)tg.close();
     return;
   }
   if(!["checkin","checkout"].includes(S.action)){renderError(ERR.INVALID_ACTION);return}
   if(!navigator.geolocation){renderError("المتصفح لا يدعم تحديد الموقع الجغرافي.");return}
   busy(true);
-  document.getElementById("confirmMsg").textContent="جاري تحديد موقعك...";
+  document.getElementById("confirmMsg").textContent=FRONTEND_CONFIG.MSG_DETERMINING_LOCATION;
   try{
     let coords;
     if(S.coords&&Date.now()-S.coordsAt<8000){
@@ -694,7 +749,7 @@ async function postAction(){
       const p=await getLocation();
       coords={lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy};
     }
-    document.getElementById("confirmMsg").textContent="تم تحديد الموقع، جارٍ تسجيل العملية...";
+    document.getElementById("confirmMsg").textContent=FRONTEND_CONFIG.MSG_DETERMINED_SAVING;
     const submitTime=new Date();
     const r=await api(S.action,{latitude:coords.lat,longitude:coords.lng,accuracy:coords.accuracy});
     if(!r.success){attendanceError(r);return}
@@ -728,17 +783,17 @@ function showResult(action,r){
 
   const w=warningFrom(r);if(w)showWarning(w,r.supervisors);else hideWarning();
   document.getElementById("continueBtn").onclick=renderHome;
-  document.getElementById("footerStatus").textContent="تم تسجيل العملية";
+  document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_SAVED;
 }
 function warningFrom(r){if(typeof r.warningMessage==="string"&&r.warningMessage.trim())return r.warningMessage.trim();if(typeof r.warning==="string"&&r.warning.trim())return r.warning.trim();if(r.warning&&typeof r.warning==="object")return r.warning.message||r.warning.text||null;if(r.hasWarning===true||r.missedCheckout===true||r.missedCheckin===true||r.previousVisitOpen===true||r.previousVisitUnclosed===true)return"يبدو أن الزيارة السابقة لم يتم تسجيل انتهائها. يمكنك متابعة عملك بشكل طبيعي، لكن يرجى إبلاغ المشرف.";return null}
 function showWarning(msg,list){document.getElementById("warning").classList.remove("hidden");document.getElementById("warningMsg").textContent=msg;const a=Array.isArray(list)&&list.length?list:DEFAULT_SUPERVISORS;const valid=a.filter(x=>x&&x.username);const box=document.getElementById("supervisorLinks");box.innerHTML="";valid.forEach(s=>{const u=String(s.username).replace(/^@/,"");const a=document.createElement("a");a.className="supervisor-link";a.href="https://t.me/"+encodeURIComponent(u);a.target="_blank";a.rel="noopener noreferrer";a.textContent="👤 "+(s.name||("@"+u));box.appendChild(a)});document.getElementById("supervisors").classList.toggle("hidden",!valid.length)}
 function hideWarning(){document.getElementById("warning").classList.add("hidden");document.getElementById("supervisors").classList.add("hidden");document.getElementById("supervisorLinks").innerHTML=""}
 function attendanceError(r){if(r.errorCode==="NOT_REGISTERED"){showRegistration();return}if(r.errorCode==="BOT_NOT_STARTED"){showBotNotStarted(r.botUrl);return}if(r.errorCode==="INACTIVE"){showInactive();return}if(r.errorCode==="NO_USERNAME"){showUsername();return}renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR)}
-function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent="التسجيل مطلوب"}
-function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent="اسم المستخدم مطلوب"}
-function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent="الحساب غير مفعل"}
-function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent="تفعيل البوت مطلوب";if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
-async function doRefresh(){home("⏳","جاري الاتصال","جاري التحقق من الاتصال بالنظام...");try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق","تم الاتصال بالخادم، لحظة واحدة...");const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.geofenceModuleAvailable=!!r.geofenceModuleAvailable;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";S.hasBranch=r.hasBranch!==false;document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
+function showRegistration(){stopClock();screen("registration");document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_REGISTRATION_REQUIRED}
+function showUsername(){stopClock();screen("username");document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_USERNAME_REQUIRED}
+function showInactive(){stopClock();screen("inactive");document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_INACTIVE}
+function showBotNotStarted(url){stopClock();screen("botNotStarted");document.getElementById("footerStatus").textContent=FRONTEND_CONFIG.STATUS_BOT_REQUIRED;if(url){document.getElementById("startBotBtn").onclick=()=>{if(tg)tg.openTelegramLink(url)};}}
+async function doRefresh(){home("⏳","جاري الاتصال",FRONTEND_CONFIG.MSG_CONNECTING);try{const ping=await api("ping");if(!ping||!ping.success||ping.service!=="online")throw Error("BACKEND_CONNECTION_FAILED");document.getElementById("welcome").textContent="متصل بالنظام ✓";home("🔄","جاري التحقق",FRONTEND_CONFIG.MSG_CONNECTED);const r=await api("status");if(!r.success){renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.name=r.name||"الموظف";S.isLeader=!!r.isLeader;S.geofenceModuleAvailable=!!r.geofenceModuleAvailable;S.locationMode=r.locationMode==="geofence"?"geofence":"freeRoam";S.hasBranch=r.hasBranch!==false;document.getElementById("businessName").textContent=V().businessName;document.getElementById("adminManageFab").classList.toggle("hidden",!S.isLeader);document.getElementById("welcome").textContent="أهلاً، "+S.name;switch(r.state){case"NEW":showRegistration();break;case"NEW_NO_USERNAME":case"EXISTING_NO_USERNAME":showUsername();break;case"INACTIVE":showInactive();break;case"ACTIVE":renderHome();if(S.justRegistered){S.justRegistered=false;showSuccessOverlay("تم تسجيل حسابك بنجاح",V().registeredMsg)}break;default:renderError("تعذر معرفة حالة حسابك.")}}catch(e){console.error("Backend connection/status error:",e);renderError("تعذر الاتصال بالنظام. تحقق من اتصال الإنترنت وحاول مرة أخرى.")}}
 async function refresh(){if(!initTelegram()||S.busy)return;busy(true);try{await doRefresh()}finally{busy(false)}}
 async function register(){if(!initTelegram()||S.busy)return;busy(true);try{const r=await api("register");if(!r.success){if(r.errorCode==="NO_USERNAME")showUsername();else if(r.errorCode==="BOT_NOT_STARTED")showBotNotStarted(r.botUrl);else renderError(ERR[r.errorCode]||r.error||ERR.SERVER_ERROR);return}S.justRegistered=true;await doRefresh()}catch(e){renderError(e.message||ERR.SERVER_ERROR)}finally{busy(false)}}
 document.getElementById("backBtn").onclick=()=>{if(!S.busy){stopClock();renderHome()}};document.getElementById("registerBtn").onclick=register;document.getElementById("retryBtn").onclick=refresh;document.getElementById("reactivateBtn").onclick=register;document.getElementById("retryBotBtn").onclick=register;
@@ -766,7 +821,7 @@ function closeOpenBranchRow(){
 
 function renderListLoading(container){
   container.innerHTML="";
-  const p=document.createElement("div");p.className="message";p.textContent="🕐 جارٍ التحميل...";
+  const p=document.createElement("div");p.className="message";p.textContent=FRONTEND_CONFIG.MSG_LOADING;
   container.appendChild(p);
   const bar=document.createElement("div");bar.className="progress show";
   container.appendChild(bar);
