@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<script>
-window.onerror = function(msg, url, line, col, error) {
-  document.body.innerHTML = '<pre style="padding:16px;white-space:pre-wrap;direction:ltr;text-align:left;font-size:12px;color:red;background:#fff">JS ERROR:\n' + msg + '\nLine ' + line + ':' + col + '\n\n' + (error && error.stack || '') + '</pre>';
-};
-window.addEventListener('unhandledrejection', function(e) {
-  document.body.innerHTML = '<pre style="padding:16px;white-space:pre-wrap;direction:ltr;text-align:left;font-size:12px;color:red;background:#fff">UNHANDLED PROMISE REJECTION:\n' + (e.reason && (e.reason.stack || e.reason.message || e.reason) || e.reason) + '</pre>';
-});
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>زيارات المبيعات</title>
@@ -405,27 +397,27 @@ const FRONTEND_CONFIG = {
   ALERT_SAVE_PARTIAL: "تم حفظ باقي التغييرات، وتعذر حفظ التالي:\n",
   
   // UI States & Statuses
-  STATUS_READY: "جاهز",
-  STATUS_WAITING_BRANCH: "بانتظار تعيين الفرع",
-  STATUS_REVIEW: "مراجعة العملية",
-  STATUS_SAVED: "تم تسجيل العملية",
-  STATUS_REGISTRATION_REQUIRED: "التسجيل مطلوب",
-  STATUS_USERNAME_REQUIRED: "اسم المستخدم مطلوب",
-  STATUS_INACTIVE: "الحساب غير مفعل",
-  STATUS_BOT_REQUIRED: "تفعيل البوت مطلوب",
+  STATUS_READY: FRONTEND_CONFIG.STATUS_READY,
+  STATUS_WAITING_BRANCH: FRONTEND_CONFIG.STATUS_WAITING_BRANCH,
+  STATUS_REVIEW: FRONTEND_CONFIG.STATUS_REVIEW,
+  STATUS_SAVED: FRONTEND_CONFIG.STATUS_SAVED,
+  STATUS_REGISTRATION_REQUIRED: FRONTEND_CONFIG.STATUS_REGISTRATION_REQUIRED,
+  STATUS_USERNAME_REQUIRED: FRONTEND_CONFIG.STATUS_USERNAME_REQUIRED,
+  STATUS_INACTIVE: FRONTEND_CONFIG.STATUS_INACTIVE,
+  STATUS_BOT_REQUIRED: FRONTEND_CONFIG.STATUS_BOT_REQUIRED,
   
   // Progress & Loading Messages
-  MSG_DETERMINING_LOCATION: "جاري تحديد موقعك...",
-  MSG_DETERMINED_SAVING: "تم تحديد الموقع، جارٍ تسجيل العملية...",
-  MSG_LOADING: "🕐 جارٍ التحميل...",
-  MSG_CONNECTING: "جاري التحقق من الاتصال بالنظام...",
-  MSG_CONNECTED: "تم الاتصال بالخادم، لحظة واحدة...",
-  MSG_LOCATION_NOT_SUPPORTED: "الجهاز لا يدعم تحديد الموقع.",
-  MSG_LOCATION_FOUND: "تم تحديد الموقع",
-  MSG_LOCATION_FAILED: "تعذر تحديد الموقع، سيُعاد تحديده عند التأكيد.",
+  MSG_DETERMINING_LOCATION: FRONTEND_CONFIG.MSG_DETERMINING_LOCATION,
+  MSG_DETERMINED_SAVING: FRONTEND_CONFIG.MSG_DETERMINED_SAVING,
+  MSG_LOADING: FRONTEND_CONFIG.MSG_LOADING,
+  MSG_CONNECTING: FRONTEND_CONFIG.MSG_CONNECTING,
+  MSG_CONNECTED: FRONTEND_CONFIG.MSG_CONNECTED,
+  MSG_LOCATION_NOT_SUPPORTED: FRONTEND_CONFIG.MSG_LOCATION_NOT_SUPPORTED,
+  MSG_LOCATION_FOUND: FRONTEND_CONFIG.MSG_LOCATION_FOUND,
+  MSG_LOCATION_FAILED: FRONTEND_CONFIG.MSG_LOCATION_FAILED,
   
   // Unassigned Branch Screen
-  UNASSIGNED_TITLE: "بانتظار تعيين الفرع",
+  UNASSIGNED_TITLE: FRONTEND_CONFIG.STATUS_WAITING_BRANCH,
   UNASSIGNED_MSG: "لم يتم تعيين فرع لك بعد. سيتم تفعيل أزرار الحضور والانصراف تلقائياً فور تعيين فرعك من قبل الإدارة.",
   
   // Admin Screens
@@ -729,9 +721,17 @@ function openConfirm(action){
 function confirmAction(action){
   if(S.busy)return;
   if(branchUnassigned())return;
-  if(S.lastSubmit && (Date.now() - S.lastSubmit.time.getTime() < FRONTEND_CONFIG.RATE_LIMIT_MINUTES * 60 * 1000)){
-    alert(FRONTEND_CONFIG.ALERT_RATE_LIMIT);
-    return;
+  if(S.lastSubmit){
+    const withinCooldown=(Date.now()-S.lastSubmit.time.getTime())<FRONTEND_CONFIG.RATE_LIMIT_MINUTES*60*1000;
+    const sameActionRepeated=S.lastSubmit.action===action;
+    // Free-roam: alternating checkin/checkout (hopping to a nearby
+    // visit) is always fine - only a repeated same action within the
+    // cooldown is blocked. Geofenced: no "nearby visit" to hop to, so
+    // any action within the cooldown is blocked, same or not.
+    if(withinCooldown && (sameActionRepeated || S.locationMode==="geofence")){
+      alert(FRONTEND_CONFIG.ALERT_RATE_LIMIT);
+      return;
+    }
   }
   openConfirm(action);
 }
@@ -761,7 +761,7 @@ async function postAction(){
     const submitTime=new Date();
     const r=await api(S.action,{latitude:coords.lat,longitude:coords.lng,accuracy:coords.accuracy});
     if(!r.success){attendanceError(r);return}
-    S.lastSubmit={time:submitTime,address:S.address};
+    S.lastSubmit={time:submitTime,address:S.address,action:S.action};
     showResult(S.action,r);
   }catch(e){
     if(e.code===1)renderError("تم رفض الوصول إلى الموقع. اسمح للتطبيق باستخدام موقعك ثم حاول مرة أخرى.");
